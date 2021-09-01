@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 
-	"github.com/xkdgo/otus_golang_homeworks/hw01_hello_otus/stringutil"
+	"golang.org/x/example/stringutil"
 )
 
 func main() {
