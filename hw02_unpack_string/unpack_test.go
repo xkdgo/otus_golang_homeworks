@@ -33,6 +33,26 @@ func TestUnpack(t *testing.T) {
 	}
 }
 
+func TestInvalidStringUnpack(t *testing.T) {
+	tests := []struct {
+		input               string
+		expectedErrorString string
+	}{
+		{input: "45", expectedErrorString: "invalid string"},
+		{input: "3abc", expectedErrorString: "invalid string"},
+		{input: "aaa10b", expectedErrorString: "invalid string"},
+	}
+
+	for _, tc := range tests {
+		tc := tc
+		t.Run(tc.input, func(t *testing.T) {
+			_, err := Unpack(tc.input)
+			require.Error(t, err)
+			require.EqualError(t, err, tc.expectedErrorString)
+		})
+	}
+}
+
 func TestUnpackInvalidString(t *testing.T) {
 	invalidStrings := []string{"3abc", "45", "aaa10b"}
 	for _, tc := range invalidStrings {
