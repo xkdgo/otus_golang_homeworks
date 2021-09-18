@@ -6,13 +6,27 @@ import (
 	"strings"
 )
 
-var s = `[\,\!\.\:\?\'\"\ \r\n\@\#\$\%\^\&\*\+\~\/\>\<]`
+var (
+	s       = `[\,\!\.\:\?\'\"\ \r\n\@\#\$\%\^\&\*\+\~\/\>\<]`
+	tire    = `(?:-)+`
+	notTire = `[^-]+`
+)
 
-var regex = regexp.MustCompile(s)
+var (
+	regex        = regexp.MustCompile(s)
+	tireregex    = regexp.MustCompile(tire)
+	nottireregex = regexp.MustCompile(notTire)
+)
 
 type freqinfo struct {
 	word    string
 	counter int
+}
+
+func isOnlyTire(str string) bool {
+	matchedTire := tireregex.MatchString(str)
+	matchedSomeOther := nottireregex.MatchString(str)
+	return !matchedSomeOther && matchedTire
 }
 
 func sortInfoSlice(resultInfo []freqinfo) {
@@ -30,6 +44,9 @@ func buildFrequencyMap(words []string) map[string]freqinfo {
 	frequency := make(map[string]freqinfo)
 	for _, word := range words {
 		word = strings.ToLower(word)
+		if isOnlyTire(word) {
+			continue
+		}
 		if word == "" {
 			continue
 		}
@@ -52,13 +69,6 @@ func Top10(text string) []string {
 	splitwords := regex.Split(text, -1)
 	var words []string
 	for _, str := range splitwords {
-		if str == "" {
-			continue
-		}
-		if str == "-" {
-			continue
-		}
-
 		words = append(words, strings.Fields(str)...)
 	}
 	frequency := buildFrequencyMap(words)
