@@ -31,12 +31,10 @@ func isOnlyTire(str string) bool {
 
 func sortInfoSlice(resultInfo []freqinfo) {
 	sort.Slice(resultInfo, func(i, j int) bool {
-		switch {
-		case resultInfo[i].counter == resultInfo[j].counter:
+		if resultInfo[i].counter == resultInfo[j].counter {
 			return resultInfo[i].word < resultInfo[j].word
-		default:
-			return resultInfo[i].counter > resultInfo[j].counter
 		}
+		return resultInfo[i].counter > resultInfo[j].counter
 	})
 }
 
