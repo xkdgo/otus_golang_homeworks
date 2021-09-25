@@ -1,6 +1,8 @@
 package hw04lrucache
 
-import "sync"
+import (
+	"sync"
+)
 
 type Key string
 
@@ -8,6 +10,11 @@ type Cache interface {
 	Set(key Key, value interface{}) bool
 	Get(key Key) (interface{}, bool)
 	Clear()
+}
+
+type cacheItem struct {
+	key   string
+	value interface{}
 }
 
 type lruCache struct {
@@ -25,16 +32,23 @@ func (c *lruCache) Set(key Key, value interface{}) bool {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	if ok {
-		first := c.queue.Front()
-		first.Value = value
-		c.items[key] = first
+		firstCacheI := c.queue.Front()
+		val, _ := firstCacheI.Value.(*cacheItem)
+		val.value = value
+		firstCacheI.Value = val
+		c.items[key] = firstCacheI
 		return true
 	}
 	currentQueueLen := c.queue.Len()
 	if currentQueueLen == c.capacity {
+		deleteCandidate := c.queue.Back().Value.(*cacheItem)
+		delete(c.items, Key(deleteCandidate.key))
 		c.queue.Remove(c.queue.Back())
 	}
-	c.items[key] = c.queue.PushFront(value)
+	newItem := new(cacheItem)
+	newItem.key = string(key)
+	newItem.value = value
+	c.items[key] = c.queue.PushFront(newItem)
 	return false
 }
 
@@ -43,12 +57,14 @@ func (c *lruCache) Get(key Key) (interface{}, bool) {
 	c.wg.Add(1)
 	c.mu.Lock()
 	defer c.mu.Unlock()
-	v, exist := c.items[key]
+	listI, exist := c.items[key]
 	if !exist {
 		return nil, false
 	}
-	c.items[key] = c.queue.PushFront(v.Value)
-	return v.Value, true
+	cacheI := listI.Value
+	c.items[key] = c.queue.PushFront(cacheI)
+	val, _ := cacheI.(*cacheItem)
+	return val.value, true
 }
 
 func (c *lruCache) Clear() {
