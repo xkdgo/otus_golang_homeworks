@@ -12,15 +12,18 @@ type Cache interface {
 
 type lruCache struct {
 	mu       sync.Mutex
+	wg       sync.WaitGroup
 	capacity int
 	queue    List
 	items    map[Key]*ListItem
 }
 
 func (c *lruCache) Set(key Key, value interface{}) bool {
+	_, ok := c.Get(key)
+	defer c.wg.Done()
+	c.wg.Add(1)
 	c.mu.Lock()
 	defer c.mu.Unlock()
-	_, ok := c.Get(key)
 	if ok {
 		first := c.queue.Front()
 		first.Value = value
@@ -36,6 +39,10 @@ func (c *lruCache) Set(key Key, value interface{}) bool {
 }
 
 func (c *lruCache) Get(key Key) (interface{}, bool) {
+	defer c.wg.Done()
+	c.wg.Add(1)
+	c.mu.Lock()
+	defer c.mu.Unlock()
 	v, exist := c.items[key]
 	if !exist {
 		return nil, false
