@@ -32,15 +32,14 @@ func (c *lruCache) Set(key Key, value interface{}) bool {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	if ok {
-		firstCacheI := c.queue.Front()
-		val, _ := firstCacheI.Value.(*cacheItem)
-		val.value = value
-		firstCacheI.Value = val
-		c.items[key] = firstCacheI
+		firstListI := c.queue.Front()
+		cachI, _ := firstListI.Value.(*cacheItem)
+		cachI.value = value
+		firstListI.Value = cachI
+		c.items[key] = firstListI
 		return true
 	}
-	currentQueueLen := c.queue.Len()
-	if currentQueueLen == c.capacity {
+	if c.capacity == c.queue.Len() {
 		deleteCandidate := c.queue.Back().Value.(*cacheItem)
 		delete(c.items, Key(deleteCandidate.key))
 		c.queue.Remove(c.queue.Back())
@@ -63,8 +62,8 @@ func (c *lruCache) Get(key Key) (interface{}, bool) {
 	}
 	c.queue.MoveToFront(listI)
 	c.items[key] = c.queue.Front()
-	val, _ := listI.Value.(*cacheItem)
-	return val.value, true
+	cachI, _ := listI.Value.(*cacheItem)
+	return cachI.value, true
 }
 
 func (c *lruCache) Clear() {
