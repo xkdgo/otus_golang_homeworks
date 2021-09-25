@@ -59,7 +59,7 @@ func TestCache(t *testing.T) {
 		require.False(t, ok)
 		require.Nil(t, val)
 
-		wasInCache := c.Set(Key("5"), "five")
+		wasInCache := c.Set(Key("5"), "five") // ["5":"five", "4":4 , "3":3, "2":2, "1":1]
 		require.True(t, wasInCache)
 
 		val, ok = c.Get("5")
@@ -69,17 +69,16 @@ func TestCache(t *testing.T) {
 		c.Set(Key("4"), "four")
 		c.Set(Key("3"), "three")
 		c.Set(Key("2"), "two")
-		c.Set(Key("1"), "one") // ["1": "one", "2":"two", "3":three, "4":"four", "5", "five"]
+		c.Set(Key("1"), "one") // ["1": "one", "2":"two", "3":three, "4":"four", "5":"five"]
 		c.Set(Key("VeryNewItem"), "SomeValue")
 		val, ok = c.Get("VeryNewItem")
 		require.True(t, ok)
 		require.Equal(t, "SomeValue", val) // ["VeryNewItem": "SomeValue", "1": "one", "2":"two", "3":three, "4":"four"]
 		c.Set(Key("VeryNewItem"), "SomeValue")
-		// "5" doesnt appear anymore
+		// "5":"five" doesnt appear anymore
 		val, ok = c.Get("5")
 		require.Nil(t, val)
 		require.False(t, ok)
-
 	})
 }
 
