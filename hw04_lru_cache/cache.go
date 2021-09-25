@@ -26,12 +26,7 @@ type lruCache struct {
 }
 
 func (c *lruCache) Set(key Key, value interface{}) bool {
-	_, keyInCache := c.Get(key)
-	defer c.wg.Done()
-	c.wg.Add(1)
-	c.mu.Lock()
-	defer c.mu.Unlock()
-	if keyInCache {
+	if _, keyInCache := c.Get(key); keyInCache {
 		firstListI := c.queue.Front()
 		cachI, _ := firstListI.Value.(*cacheItem)
 		cachI.value = value
@@ -39,6 +34,11 @@ func (c *lruCache) Set(key Key, value interface{}) bool {
 		c.items[key] = firstListI
 		return true
 	}
+	defer c.wg.Done()
+	c.wg.Add(1)
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
 	if c.capacity == c.queue.Len() {
 		deleteCandidate := c.queue.Back().Value.(*cacheItem)
 		delete(c.items, Key(deleteCandidate.key))
