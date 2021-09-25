@@ -1,7 +1,9 @@
 package hw04lrucache
 
 import (
+	"math/rand"
 	"strconv"
+	"sync"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -73,6 +75,7 @@ func TestCache(t *testing.T) {
 		require.True(t, ok)
 		require.Equal(t, "SomeValue", val) // ["VeryNewItem": "SomeValue", "1": "one", "2":"two", "3":three, "4":"four"]
 		c.Set(Key("VeryNewItem"), "SomeValue")
+		// "5" doesnt appear anymore
 		val, ok = c.Get("5")
 		require.Nil(t, val)
 		require.False(t, ok)
@@ -80,26 +83,26 @@ func TestCache(t *testing.T) {
 	})
 }
 
-// func TestCacheMultithreading(t *testing.T) {
-// 	// task with asterisk completed.
+func TestCacheMultithreading(t *testing.T) {
+	// task with asterisk completed.
 
-// 	c := NewCache(10)
-// 	wg := &sync.WaitGroup{}
-// 	wg.Add(2)
+	c := NewCache(10)
+	wg := &sync.WaitGroup{}
+	wg.Add(2)
 
-// 	go func() {
-// 		defer wg.Done()
-// 		for i := 0; i < 1_000_000; i++ {
-// 			c.Set(Key(strconv.Itoa(i)), i)
-// 		}
-// 	}()
+	go func() {
+		defer wg.Done()
+		for i := 0; i < 1_000_000; i++ {
+			c.Set(Key(strconv.Itoa(i)), i)
+		}
+	}()
 
-// 	go func() {
-// 		defer wg.Done()
-// 		for i := 0; i < 1_000_000; i++ {
-// 			c.Get(Key(strconv.Itoa(rand.Intn(1_000_000))))
-// 		}
-// 	}()
+	go func() {
+		defer wg.Done()
+		for i := 0; i < 1_000_000; i++ {
+			c.Get(Key(strconv.Itoa(rand.Intn(1_000_000))))
+		}
+	}()
 
-// 	wg.Wait()
-// }
+	wg.Wait()
+}
