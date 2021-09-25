@@ -61,9 +61,9 @@ func (c *lruCache) Get(key Key) (interface{}, bool) {
 	if !exist {
 		return nil, false
 	}
-	cacheI := listI.Value
-	c.items[key] = c.queue.PushFront(cacheI)
-	val, _ := cacheI.(*cacheItem)
+	c.queue.MoveToFront(listI)
+	c.items[key] = c.queue.Front()
+	val, _ := listI.Value.(*cacheItem)
 	return val.value, true
 }
 
