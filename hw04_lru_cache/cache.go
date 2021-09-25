@@ -26,12 +26,12 @@ type lruCache struct {
 }
 
 func (c *lruCache) Set(key Key, value interface{}) bool {
-	_, exist := c.Get(key)
+	_, keyInCache := c.Get(key)
 	defer c.wg.Done()
 	c.wg.Add(1)
 	c.mu.Lock()
 	defer c.mu.Unlock()
-	if exist {
+	if keyInCache {
 		firstListI := c.queue.Front()
 		cachI, _ := firstListI.Value.(*cacheItem)
 		cachI.value = value
