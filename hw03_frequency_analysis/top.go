@@ -38,8 +38,8 @@ func sortInfoSlice(resultInfo []freqinfo) {
 	})
 }
 
-func buildFrequencyMap(words []string) map[string]freqinfo {
-	frequency := make(map[string]freqinfo)
+func buildFrequencyMap(words []string) map[string]int {
+	frequency := make(map[string]int)
 	for _, word := range words {
 		word = strings.ToLower(word)
 		if isOnlyTire(word) {
@@ -48,17 +48,7 @@ func buildFrequencyMap(words []string) map[string]freqinfo {
 		if word == "" {
 			continue
 		}
-		if _, ok := frequency[word]; !ok {
-			newInfo := freqinfo{
-				word,
-				1,
-			}
-			frequency[word] = newInfo
-		} else {
-			info := frequency[word]
-			info.counter++
-			frequency[word] = info
-		}
+		frequency[word]++
 	}
 	return frequency
 }
@@ -72,9 +62,13 @@ func Top10(text string) []string {
 	frequency := buildFrequencyMap(words)
 
 	resultInfo := make([]freqinfo, 0, len(frequency))
-	for word, info := range frequency {
+	for word, counter := range frequency {
 		if len(word) == 0 {
 			continue
+		}
+		info := freqinfo{
+			word:    word,
+			counter: counter,
 		}
 		resultInfo = append(resultInfo, info)
 	}
