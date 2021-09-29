@@ -28,16 +28,18 @@ func deleteLastRune(b *strings.Builder) {
 }
 
 func Unpack(packedStr string) (unpacked string, err error) {
-	var buffered rune
-	var backslashedFlag bool
-	var multiplieredFlag bool
-	var b strings.Builder
+	var (
+		buffered         rune
+		backslashedFlag  bool
+		multiplieredFlag bool
+		b                strings.Builder
+	)
 	for index, currentRune := range packedStr {
 		switch {
 		case index == 0 && unicode.IsDigit(currentRune):
 			b.Reset()
 			err = ErrInvalidString
-			return
+			return "", err
 		case currentRune == backslash && !backslashedFlag:
 			setFlag(&backslashedFlag)
 			resetFlag(&multiplieredFlag)
@@ -45,11 +47,11 @@ func Unpack(packedStr string) (unpacked string, err error) {
 			if multiplieredFlag {
 				b.Reset()
 				err = ErrInvalidString
-				return
+				return "", err
 			}
-			multiplier, notOk := strconv.Atoi(string(currentRune))
-			if notOk != nil {
-				panic(notOk)
+			multiplier, err := strconv.Atoi(string(currentRune))
+			if err != nil {
+				return "", err
 			}
 			switch multiplier {
 			case 0:
@@ -70,5 +72,5 @@ func Unpack(packedStr string) (unpacked string, err error) {
 		}
 	}
 	unpacked = b.String()
-	return
+	return unpacked, nil
 }
