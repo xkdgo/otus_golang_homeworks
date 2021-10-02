@@ -2,9 +2,6 @@ package hw05parallelexecution
 
 import (
 	"errors"
-	"fmt"
-
-	// "fmt"
 	"sync"
 	"sync/atomic"
 )
@@ -15,7 +12,7 @@ var wg sync.WaitGroup
 type Task func() error
 
 func produce(taskCh chan Task,
-	taskcounter, errorcounter, isErrorEnd *int32,
+	taskCounter, errorCounter, isErrorEnd *int32,
 	lentasks, m int32) {
 	defer wg.Done()
 	for {
@@ -23,24 +20,20 @@ func produce(taskCh chan Task,
 		case task := <-taskCh:
 			switch {
 			case task == nil:
+				//closed channel cached
 				return
-			case atomic.LoadInt32(errorcounter) >= m && m > 0:
+			case atomic.LoadInt32(errorCounter) >= m && m >= 0:
 				atomic.AddInt32(isErrorEnd, 1)
 				return
-			case atomic.LoadInt32(taskcounter) >= lentasks:
+			case atomic.LoadInt32(taskCounter) >= lentasks:
 				return
 			default:
 				err := task()
 				if err != nil {
-					atomic.AddInt32(errorcounter, 1)
+					atomic.AddInt32(errorCounter, 1)
 
 				}
-				atomic.AddInt32(taskcounter, 1)
-				if atomic.LoadInt32(taskcounter) >= lentasks {
-					fmt.Println(atomic.LoadInt32(taskcounter))
-					return
-				}
-
+				atomic.AddInt32(taskCounter, 1)
 			}
 
 		}
@@ -49,15 +42,14 @@ func produce(taskCh chan Task,
 
 // Run starts tasks in n goroutines and stops its work when receiving m errors from tasks.
 func Run(tasks []Task, n, m int) error {
-	// Place your code here.
-	var taskcounter, errorcounter, isErrorEnd int32
+	var taskCounter, errorCounter, isErrorEnd int32
 	taskCh := make(chan Task, len(tasks))
 
 	for i := 0; i < n; i++ {
 		wg.Add(1)
 		go produce(taskCh,
-			&taskcounter,
-			&errorcounter,
+			&taskCounter,
+			&errorCounter,
 			&isErrorEnd,
 			int32(len(tasks)),
 			int32(m),
@@ -67,8 +59,10 @@ func Run(tasks []Task, n, m int) error {
 		task := task
 		select {
 		case taskCh <- task:
+			//put all tasks without block and finish
 		}
 	}
+	//send nil to close goroutine if success
 	close(taskCh)
 	wg.Wait()
 	if isErrorEnd >= 1 {
