@@ -6,8 +6,10 @@ import (
 	"sync/atomic"
 )
 
-var ErrErrorsLimitExceeded = errors.New("errors limit exceeded")
-var wg sync.WaitGroup
+var (
+	ErrErrorsLimitExceeded = errors.New("errors limit exceeded")
+	wg                     sync.WaitGroup
+)
 
 type Task func() error
 
@@ -15,27 +17,22 @@ func produce(taskCh chan Task,
 	taskCounter, errorCounter, isErrorEnd *int32,
 	lentasks, m int32) {
 	defer wg.Done()
-	for {
-		select {
-		case task := <-taskCh:
-			switch {
-			case task == nil:
-				//closed channel cached
-				return
-			case atomic.LoadInt32(errorCounter) >= m && m >= 0:
-				atomic.AddInt32(isErrorEnd, 1)
-				return
-			case atomic.LoadInt32(taskCounter) >= lentasks:
-				return
-			default:
-				err := task()
-				if err != nil {
-					atomic.AddInt32(errorCounter, 1)
-
-				}
-				atomic.AddInt32(taskCounter, 1)
+	for task := range taskCh {
+		switch {
+		case task == nil:
+			// closed channel cached
+			return
+		case atomic.LoadInt32(errorCounter) >= m && m >= 0:
+			atomic.AddInt32(isErrorEnd, 1)
+			return
+		case atomic.LoadInt32(taskCounter) >= lentasks:
+			return
+		default:
+			err := task()
+			if err != nil {
+				atomic.AddInt32(errorCounter, 1)
 			}
-
+			atomic.AddInt32(taskCounter, 1)
 		}
 	}
 }
@@ -57,12 +54,9 @@ func Run(tasks []Task, n, m int) error {
 	}
 	for _, task := range tasks {
 		task := task
-		select {
-		case taskCh <- task:
-			//put all tasks without block and finish
-		}
+		taskCh <- task // put all tasks without block and finish
 	}
-	//send nil to close goroutine if success
+	// send nil to close goroutine if success
 	close(taskCh)
 	wg.Wait()
 	if isErrorEnd >= 1 {
