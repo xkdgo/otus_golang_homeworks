@@ -19,10 +19,10 @@ func produce(taskCh chan Task,
 	defer wg.Done()
 	for task := range taskCh {
 		switch {
-		case task == nil:
-			// closed channel cached
+		case m == 0 && atomic.LoadInt32(errorCounter) > m:
+			atomic.AddInt32(isErrorEnd, 1)
 			return
-		case atomic.LoadInt32(errorCounter) >= m && m >= 0:
+		case atomic.LoadInt32(errorCounter) >= m && m > 0:
 			atomic.AddInt32(isErrorEnd, 1)
 			return
 		case atomic.LoadInt32(taskCounter) >= lentasks:
@@ -39,6 +39,9 @@ func produce(taskCh chan Task,
 
 // Run starts tasks in n goroutines and stops its work when receiving m errors from tasks.
 func Run(tasks []Task, n, m int) error {
+	if len(tasks) == 0 {
+		return nil
+	}
 	var taskCounter, errorCounter, isErrorEnd int32
 	taskCh := make(chan Task, len(tasks))
 
