@@ -19,7 +19,6 @@ type cacheItem struct {
 
 type lruCache struct {
 	mu       sync.Mutex
-	wg       sync.WaitGroup
 	capacity int
 	queue    List
 	items    map[Key]*ListItem
@@ -28,14 +27,12 @@ type lruCache struct {
 func (c *lruCache) Set(key Key, value interface{}) bool {
 	if _, keyInCache := c.Get(key); keyInCache {
 		firstListI := c.queue.Front()
-		cachI, _ := firstListI.Value.(*cacheItem)
+		cachI := firstListI.Value.(*cacheItem)
 		cachI.value = value
 		firstListI.Value = cachI
 		c.items[key] = firstListI
 		return true
 	}
-	defer c.wg.Done()
-	c.wg.Add(1)
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
@@ -44,16 +41,12 @@ func (c *lruCache) Set(key Key, value interface{}) bool {
 		delete(c.items, Key(deleteCandidate.key))
 		c.queue.Remove(c.queue.Back())
 	}
-	newItem := new(cacheItem)
-	newItem.key = string(key)
-	newItem.value = value
+	newItem := &cacheItem{key: string(key), value: value}
 	c.items[key] = c.queue.PushFront(newItem)
 	return false
 }
 
 func (c *lruCache) Get(key Key) (interface{}, bool) {
-	defer c.wg.Done()
-	c.wg.Add(1)
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	listI, exist := c.items[key]
@@ -62,14 +55,13 @@ func (c *lruCache) Get(key Key) (interface{}, bool) {
 	}
 	c.queue.MoveToFront(listI)
 	c.items[key] = c.queue.Front()
-	cachI, _ := listI.Value.(*cacheItem)
+	cachI := listI.Value.(*cacheItem)
 	return cachI.value, true
 }
 
 func (c *lruCache) Clear() {
-	defer c.wg.Done()
-	c.wg.Add(1)
 	c.mu.Lock()
+	defer c.mu.Unlock()
 	c.queue = NewList()
 	c.items = make(map[Key]*ListItem, c.capacity)
 }
