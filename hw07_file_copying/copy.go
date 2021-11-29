@@ -14,12 +14,15 @@ var (
 )
 
 func Copy(fromPath, toPath string, offset, limit int64) error {
-	src, err := os.Open(from)
+	src, err := os.Open(fromPath)
 	if err != nil {
 		return err
 	}
 	defer src.Close()
 	srcinfo, err := src.Stat()
+	if err != nil {
+		return err
+	}
 	// fmt.Printf("%T\n%+v\n", srcinfo.Size(), srcinfo.Size())
 	lenSrcFile := srcinfo.Size()
 	if offset > 0 {
@@ -27,7 +30,7 @@ func Copy(fromPath, toPath string, offset, limit int64) error {
 			return ErrOffsetExceedsFileSize
 		}
 		src.Seek(offset, io.SeekStart)
-		lenSrcFile = lenSrcFile - offset
+		lenSrcFile -= offset
 	}
 	switch {
 	case lenSrcFile == 0:
@@ -36,6 +39,9 @@ func Copy(fromPath, toPath string, offset, limit int64) error {
 		limit = lenSrcFile
 	}
 	dst, err := os.Create(toPath)
+	if err != nil {
+		return err
+	}
 	defer dst.Close()
 	if err != nil {
 		return err
