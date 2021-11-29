@@ -2,7 +2,7 @@ package main
 
 import (
 	"bufio"
-	"fmt"
+	"bytes"
 	"io"
 	"log"
 	"os"
@@ -27,11 +27,15 @@ func ReadDir(dir string) (Environment, error) {
 		return nil, err
 	}
 	for _, f := range files {
-		err = checkFileName(f.Name())
+		if !isCorrectFileName(f.Name()) {
+			// ignore bad filenames '=' in filename
+			continue
+		}
 		if err != nil {
 			log.Println("checkFileName ", err)
 			return nil, err
 		}
+		// ignore Dir in Dir
 		if !f.IsDir() {
 			pathToEnvFile := path.Join(dir, f.Name())
 			fileInfo, err := f.Info()
@@ -40,7 +44,7 @@ func ReadDir(dir string) (Environment, error) {
 				return nil, err
 			}
 			if fileInfo.Size() == 0 {
-				envMap[f.Name()] = EnvValue{"", true}
+				envMap[f.Name()] = EnvValue{Value: "", NeedRemove: true}
 				continue
 			}
 			content, err := processFileContent(pathToEnvFile)
@@ -48,32 +52,37 @@ func ReadDir(dir string) (Environment, error) {
 				log.Println("processFileContent", err)
 				return nil, err
 			}
-			envMap[f.Name()] = EnvValue{content, false}
+			envMap[f.Name()] = EnvValue{Value: content, NeedRemove: false}
 		}
 
 	}
 	return envMap, nil
 }
 
-func checkFileName(nameOfFile string) error {
-	fmt.Println("checkFileName will implement later")
-	return nil
+func isCorrectFileName(nameOfFile string) bool {
+	for _, sym := range nameOfFile {
+		if sym == '=' {
+			return false
+		}
+	}
+	return true
 }
 
-func processFileContent(pathToEnvFile string) (content string, err error) {
+func processFileContent(pathToEnvFile string) (string, error) {
 	fd, err := os.Open(pathToEnvFile)
 	if err != nil {
 		log.Println("Open ", err)
 		return "", err
 	}
 	bufReader := bufio.NewReader(fd)
-	// TODO replace ReadString with ReadSlice
-	unprocessedEnvVar, err := bufReader.ReadString(byte('\n'))
+	bytesEnvVar, err := bufReader.ReadBytes(byte('\n'))
 	if err != nil && err != io.EOF {
 		log.Println("bufReader", err)
 		return "", err
 	}
-	trimmedEnVar := strings.TrimRight(unprocessedEnvVar, " \t\n")
-
+	bytesEnvVar = bytes.Replace(bytesEnvVar, []byte{0x00}, []byte{'\n'}, -1)
+	untrimmedEnvVar := string(bytesEnvVar)
+	trimmedEnVar := strings.TrimRight(untrimmedEnvVar, " \t\n")
 	return trimmedEnVar, nil
+
 }

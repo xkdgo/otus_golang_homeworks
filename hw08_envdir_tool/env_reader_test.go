@@ -5,17 +5,7 @@ import (
 	"testing"
 )
 
-// func TestReadDir(t *testing.T) {
-// 	// Place your code here
-// }
-
 func TestReadDir(t *testing.T) {
-	Env := make(map[string]EnvValue, 0)
-	Env["HELLO"] = EnvValue{Value: "\"hello\"", NeedRemove: false}
-	Env["BAR"] = EnvValue{Value: "bar", NeedRemove: false}
-	Env["FOO"] = EnvValue{Value: "   foo\nwith new line", NeedRemove: false}
-	Env["EMPTY"] = EnvValue{Value: "", NeedRemove: false}
-	Env["UNSET"] = EnvValue{Value: "", NeedRemove: true}
 
 	type args struct {
 		dir string
@@ -27,8 +17,14 @@ func TestReadDir(t *testing.T) {
 		wantErr bool
 	}{
 		{name: "test directory env",
-			args:    args{dir: "testdata/env"},
-			want:    Env,
+			args: args{dir: "testdata/env"},
+			want: Environment{
+				"HELLO": EnvValue{Value: "\"hello\"", NeedRemove: false},
+				"BAR":   EnvValue{Value: "bar", NeedRemove: false},
+				"FOO":   EnvValue{Value: "   foo\nwith new line", NeedRemove: false},
+				"EMPTY": EnvValue{Value: "", NeedRemove: false},
+				"UNSET": EnvValue{Value: "", NeedRemove: true},
+			},
 			wantErr: false,
 		},
 	}
