@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"bytes"
+	"errors"
 	"io"
 	"log"
 	"os"
@@ -21,7 +22,7 @@ type EnvValue struct {
 // ReadDir reads a specified directory and returns map of env variables.
 // Variables represented as files where filename is name of variable, file first line is a value.
 func ReadDir(dir string) (Environment, error) {
-	envMap := make(map[string]EnvValue, 0)
+	envMap := make(map[string]EnvValue)
 	files, err := os.ReadDir(dir)
 	if err != nil {
 		return nil, err
@@ -54,7 +55,6 @@ func ReadDir(dir string) (Environment, error) {
 			}
 			envMap[f.Name()] = EnvValue{Value: content, NeedRemove: false}
 		}
-
 	}
 	return envMap, nil
 }
@@ -76,13 +76,12 @@ func processFileContent(pathToEnvFile string) (string, error) {
 	}
 	bufReader := bufio.NewReader(fd)
 	bytesEnvVar, err := bufReader.ReadBytes(byte('\n'))
-	if err != nil && err != io.EOF {
+	if err != nil && !errors.Is(err, io.EOF) {
 		log.Println("bufReader", err)
 		return "", err
 	}
-	bytesEnvVar = bytes.Replace(bytesEnvVar, []byte{0x00}, []byte{'\n'}, -1)
+	bytesEnvVar = bytes.ReplaceAll(bytesEnvVar, []byte{0x00}, []byte{'\n'})
 	untrimmedEnvVar := string(bytesEnvVar)
 	trimmedEnVar := strings.TrimRight(untrimmedEnvVar, " \t\n")
 	return trimmedEnVar, nil
-
 }
