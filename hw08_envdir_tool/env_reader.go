@@ -25,7 +25,6 @@ func ReadDir(dir string) (Environment, error) {
 	envMap := make(map[string]EnvValue)
 	files, err := os.ReadDir(dir)
 	if err != nil {
-		log.Println("ReadDir ", err)
 		return nil, err
 	}
 	for _, f := range files {
@@ -38,7 +37,6 @@ func ReadDir(dir string) (Environment, error) {
 			pathToEnvFile := path.Join(dir, f.Name())
 			fileInfo, err := f.Info()
 			if err != nil {
-				log.Println("fileInfo ", err)
 				return nil, err
 			}
 			if fileInfo.Size() == 0 {
@@ -47,7 +45,6 @@ func ReadDir(dir string) (Environment, error) {
 			}
 			content, err := processFileContent(pathToEnvFile)
 			if err != nil {
-				log.Println("processFileContent", err)
 				return nil, err
 			}
 			envMap[f.Name()] = EnvValue{Value: content, NeedRemove: false}
