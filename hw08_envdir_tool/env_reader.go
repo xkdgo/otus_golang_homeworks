@@ -25,16 +25,13 @@ func ReadDir(dir string) (Environment, error) {
 	envMap := make(map[string]EnvValue)
 	files, err := os.ReadDir(dir)
 	if err != nil {
+		log.Println("ReadDir ", err)
 		return nil, err
 	}
 	for _, f := range files {
 		if !isCorrectFileName(f.Name()) {
 			// ignore bad filenames '=' in filename
 			continue
-		}
-		if err != nil {
-			log.Println("checkFileName ", err)
-			return nil, err
 		}
 		// ignore Dir in Dir
 		if !f.IsDir() {
