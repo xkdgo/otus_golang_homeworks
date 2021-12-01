@@ -4,6 +4,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"testing"
+
+	"github.com/stretchr/testify/require"
+
+	"github.com/xkdgo/otus_golang_homeworks/hw09_struct_validator/valuerror"
 )
 
 type UserRole string
@@ -55,15 +59,15 @@ func TestValidate(t *testing.T) {
 			expectedErr: ValidationErrors{
 				ValidationError{
 					Field: "ID",
-					Err:   ErrValidateLen{36, 5},
+					Err:   valuerror.ErrValidateLen{TrueLimit: 36, ActualValue: 5},
 				},
 				ValidationError{
 					Field: "Age",
-					Err:   ErrValidateMax,
+					Err:   valuerror.ErrValidateMax{TrueLimit: 50, ActualValue: 51},
 				},
 				ValidationError{
 					Field: "Email",
-					Err:   ErrValidateFieldByRegexp,
+					Err:   valuerror.ErrValidateFieldByRegexp,
 				},
 			},
 		},
@@ -75,9 +79,12 @@ func TestValidate(t *testing.T) {
 		t.Run(fmt.Sprintf("case %d", i), func(t *testing.T) {
 			tt := tt
 			t.Parallel()
+			var valErr ValidationErrors
+			actualErr := Validate(tt.in)
+			require.Error(t, actualErr)
+			require.ErrorAs(t, actualErr, &valErr)
+			require.Equal(t, actualErr, tt.expectedErr)
 
-			// Place your code here.
-			_ = tt
 		})
 	}
 }

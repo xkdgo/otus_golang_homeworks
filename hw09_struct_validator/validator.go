@@ -1,30 +1,10 @@
 package hw09structvalidator
 
 import (
-	"errors"
-	"strconv"
+	"fmt"
+	"reflect"
 	"strings"
 )
-
-var (
-	// ErrValidateLen           = errors.New("invalid field len")
-	ErrValidateMax           = errors.New("greater than max")
-	ErrValidateFieldByRegexp = errors.New("doesn`t match regular expression")
-)
-
-type ErrValidateLen struct {
-	trueLen   int
-	actualLen int
-}
-
-func (v ErrValidateLen) Error() string {
-	b := strings.Builder{}
-	b.WriteString("invalid actual field len is ")
-	b.WriteString(strconv.Itoa(v.trueLen))
-	b.WriteString("should be equal ")
-	b.WriteString(strconv.Itoa(v.actualLen))
-	return b.String()
-}
 
 type ValidationError struct {
 	Field string
@@ -50,6 +30,28 @@ func (v ValidationErrors) Error() string {
 
 func Validate(v interface{}) error {
 	var errs ValidationErrors
-	// Place your code here.
+	rVal := reflect.ValueOf(v)
+	if rVal.Kind() != reflect.Struct {
+		return nil
+	}
+	structRval := rVal.Type()
+	for i := 0; i < structRval.NumField(); i++ {
+		fld := structRval.Field(i)
+		var (
+			fieldName  = fld.Name
+			fieldType  = fld.Type
+			fieldTag   = fld.Tag
+			fieldValue = rVal.Field(i)
+		)
+		fmt.Println(
+			"Fieldname: ", fieldName,
+			"\nFieldValue: ", fieldValue,
+			"\nType: ", fieldType,
+			"\nTag: ", fieldTag,
+		)
+	}
+	if len(errs) == 0 {
+		return nil
+	}
 	return errs
 }
