@@ -37,12 +37,35 @@ type (
 )
 
 func TestValidate(t *testing.T) {
+
 	tests := []struct {
 		in          interface{}
 		expectedErr error
 	}{
 		{
-			// Place your code here.
+			in: User{
+				ID:     "12345",
+				Name:   "Dart Weider",
+				Age:    51,
+				Email:  "eniken-empire.loc",
+				Role:   "admin",
+				Phones: []string{"012345678911", "01234"},
+				meta:   []byte{},
+			},
+			expectedErr: ValidationErrors{
+				ValidationError{
+					Field: "ID",
+					Err:   ErrValidateLen{36, 5},
+				},
+				ValidationError{
+					Field: "Age",
+					Err:   ErrValidateMax,
+				},
+				ValidationError{
+					Field: "Email",
+					Err:   ErrValidateFieldByRegexp,
+				},
+			},
 		},
 		// ...
 		// Place your code here.
