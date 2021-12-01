@@ -6,7 +6,6 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
-
 	"github.com/xkdgo/otus_golang_homeworks/hw09_struct_validator/valuerror"
 )
 
@@ -41,7 +40,6 @@ type (
 )
 
 func TestValidate(t *testing.T) {
-
 	tests := []struct {
 		in          interface{}
 		expectedErr error
@@ -84,7 +82,6 @@ func TestValidate(t *testing.T) {
 			require.Error(t, actualErr)
 			require.ErrorAs(t, actualErr, &valErr)
 			require.Equal(t, actualErr, tt.expectedErr)
-
 		})
 	}
 }

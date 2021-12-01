@@ -13,7 +13,7 @@ type ValidationError struct {
 
 type ValidationErrors []ValidationError
 
-// ValidationErrors.Error converts slice of errors into single string
+// ValidationErrors.Error converts slice of errors into single string.
 func (v ValidationErrors) Error() string {
 	b := strings.Builder{}
 	for i, err := range v {
@@ -23,7 +23,6 @@ func (v ValidationErrors) Error() string {
 		if len(v) != 0 && i == len(v)-1 {
 			b.WriteString(" | ")
 		}
-
 	}
 	return b.String()
 }
