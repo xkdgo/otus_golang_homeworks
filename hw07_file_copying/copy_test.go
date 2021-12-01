@@ -125,7 +125,7 @@ func TestCopyProgressBar(t *testing.T) {
 				toPath:            path.Join(tmpDir, "result.txt"),
 				offset:            100,
 				limit:             1000,
-				progressBarSample: "================] 100.00%",
+				progressBarSample: "100.00%",
 			},
 			wantErr: false,
 		},
