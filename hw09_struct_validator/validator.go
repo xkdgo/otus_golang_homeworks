@@ -36,7 +36,8 @@ func (v ValidationError) Error() string {
 	return b.String()
 }
 
-type validationFunc func(string, string, string, reflect.Value, reflect.Type) error
+type validationFunc func(string /* tag key */, string /* limit */, string, /* struct field name */
+	reflect.Value /* value to check with limit */, reflect.Type /* type of value */) error
 
 var validationFuncMap = map[string]validationFunc{
 	"len":    validateLen,
