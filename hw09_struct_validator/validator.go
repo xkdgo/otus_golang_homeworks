@@ -1,9 +1,17 @@
 package hw09structvalidator
 
 import (
+	"errors"
 	"fmt"
 	"reflect"
 	"strings"
+)
+
+var validatorKey = "validate"
+
+var (
+	ErrInvalidValidator = errors.New("validator should be func:limit")
+	ErrExtractValidator = errors.New("some extractor error")
 )
 
 type ValidationError struct {
@@ -27,6 +35,9 @@ func (v ValidationErrors) Error() string {
 	return b.String()
 }
 
+// This function validate fields of struct, if they have `validatorKey flag.
+// By default this validatorKey="validate".
+// ...
 func Validate(v interface{}) error {
 	var errs ValidationErrors
 	rVal := reflect.ValueOf(v)
@@ -34,6 +45,7 @@ func Validate(v interface{}) error {
 		return nil
 	}
 	structRval := rVal.Type()
+	errs = make(ValidationErrors, 0, structRval.NumField())
 	for i := 0; i < structRval.NumField(); i++ {
 		fld := structRval.Field(i)
 		var (
@@ -48,9 +60,38 @@ func Validate(v interface{}) error {
 			"\nType: ", fieldType,
 			"\nTag: ", fieldTag,
 		)
+		val, ok := fieldTag.Lookup(validatorKey)
+		if !ok {
+			continue
+		}
+		if val == "" {
+			continue
+		}
+		fmt.Println("TagValue= ", val)
+		extrValMap, err := extractValidators(val)
+		if err != nil {
+			return err // TODO make correct validation errors
+		}
+		fmt.Printf("%#v\n", extrValMap)
 	}
 	if len(errs) == 0 {
-		return nil
+		return errs // TODO return nil
 	}
 	return errs
+}
+
+func extractValidators(val string) (map[string]string, error) {
+	if !strings.Contains(val, ":") {
+		return nil, ErrInvalidValidator
+	}
+	validateCandidates := strings.Split(val, "|")
+	extractedMap := make(map[string]string, len(validateCandidates))
+	for _, candidate := range validateCandidates {
+		keyWithVal := strings.Split(candidate, ":")
+		if len(keyWithVal) != 2 {
+			return nil, ErrInvalidValidator
+		}
+		extractedMap[strings.Trim(keyWithVal[0], " ")] = keyWithVal[1]
+	}
+	return extractedMap, nil
 }
