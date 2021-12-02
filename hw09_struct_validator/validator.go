@@ -36,23 +36,25 @@ func (v ValidationError) Error() string {
 	return b.String()
 }
 
-type validationFunc func(string, string, reflect.Value, reflect.Type) error
+type validationFunc func(string, string, string, reflect.Value, reflect.Type) error
 
 var validationFuncMap = map[string]validationFunc{
 	"len":    validateLen,
-	"min":    validateMin,
-	"max":    validateMax,
+	"min":    validateMinMax,
+	"max":    validateMinMax,
 	"in":     validateIn,
 	"regexp": validateRegexp,
 }
 
-func validateLen(limit string, structFieldName string, valueToCheck reflect.Value, valueType reflect.Type) error {
+func validateLen(method string, limit string, structFieldName string,
+	valueToCheck reflect.Value, valueType reflect.Type) error {
 	limitInt, err := strconv.Atoi(limit)
+	fmt.Println(structFieldName, valueType.Kind())
 	if err != nil {
 		return ErrInvalidValidator{fmt.Sprintf("%s should be integer", limit)}
 	}
 	switch {
-	case valueType.String() == "string":
+	case valueType.Kind().String() == "string":
 		if len(valueToCheck.String()) != limitInt {
 			return ValidationError{
 				Field: structFieldName,
@@ -63,7 +65,7 @@ func validateLen(limit string, structFieldName string, valueToCheck reflect.Valu
 		elemInterface := valueToCheck.Interface()
 		elemSlice, ok := elemInterface.([]string)
 		if !ok {
-			return ErrInvalidValidator{fmt.Sprintf("Could not assert %#v to string slice", elemInterface)}
+			return ErrInvalidValidator{fmt.Sprintf("could not assert %#v to string slice", elemInterface)}
 		}
 		for _, elem := range elemSlice {
 			if len(elem) != limitInt {
@@ -75,54 +77,74 @@ func validateLen(limit string, structFieldName string, valueToCheck reflect.Valu
 		}
 	default:
 		return ErrInvalidValidator{fmt.Sprintf(
-			"Field %s unsupported type %s for method \"len\"", structFieldName, valueType)}
+			"field %s unsupported type %s for method \"%s\"", structFieldName, valueType, method)}
 	}
 	return nil
 }
 
-func validateMin(limit string, structFieldName string, valueToCheck reflect.Value, valueType reflect.Type) error {
+func validateMinMax(method string, limit string, structFieldName string,
+	valueToCheck reflect.Value, valueType reflect.Type) error {
 	limitInt, err := strconv.Atoi(limit)
 	if err != nil {
 		return ErrInvalidValidator{fmt.Sprintf("%s should be integer", limit)}
 	}
 	switch {
-	case valueType.String() == "int":
-		if int(valueToCheck.Int()) < limitInt {
-			return ValidationError{
-				Field: structFieldName,
-				Err:   valuerror.ErrValidateMin{TrueLimit: limitInt, ActualValue: int(valueToCheck.Int())},
+	case valueType.Kind().String() == "int":
+		switch method {
+		case "min":
+			if int(valueToCheck.Int()) < limitInt {
+				return ValidationError{
+					Field: structFieldName,
+					Err:   valuerror.ErrValidateMin{TrueLimit: limitInt, ActualValue: int(valueToCheck.Int())},
+				}
+			}
+		case "max":
+			if int(valueToCheck.Int()) > limitInt {
+				return ValidationError{
+					Field: structFieldName,
+					Err:   valuerror.ErrValidateMax{TrueLimit: limitInt, ActualValue: int(valueToCheck.Int())},
+				}
 			}
 		}
+
 	case valueType.String() == "[]int":
 		elemInterface := valueToCheck.Interface()
 		elemSlice, ok := elemInterface.([]int)
 		if !ok {
-			return ErrInvalidValidator{fmt.Sprintf("Could not assert %#v to int slice", elemInterface)}
+			return ErrInvalidValidator{fmt.Sprintf("could not assert %#v to int slice", elemInterface)}
 		}
 		for _, elem := range elemSlice {
-			if elem < limitInt {
-				return ValidationError{
-					Field: structFieldName,
-					Err:   valuerror.ErrValidateMin{TrueLimit: limitInt, ActualValue: elem},
+			switch method {
+			case "min":
+				if elem < limitInt {
+					return ValidationError{
+						Field: structFieldName,
+						Err:   valuerror.ErrValidateMin{TrueLimit: limitInt, ActualValue: elem},
+					}
+				}
+			case "max":
+				if elem > limitInt {
+					return ValidationError{
+						Field: structFieldName,
+						Err:   valuerror.ErrValidateMax{TrueLimit: limitInt, ActualValue: elem},
+					}
 				}
 			}
 		}
 	default:
 		return ErrInvalidValidator{fmt.Sprintf(
-			"Field %s unsupported type %s for method \"min\"", structFieldName, valueType)}
+			"field %s unsupported type %s for method \"%s\"", structFieldName, valueType, method)}
 	}
 	return nil
 }
 
-func validateMax(limit string, structFieldName string, valueToCheck reflect.Value, valueType reflect.Type) error {
+func validateIn(method string, limit string, structFieldName string,
+	valueToCheck reflect.Value, valueType reflect.Type) error {
 	return nil
 }
 
-func validateIn(limit string, structFieldName string, valueToCheck reflect.Value, valueType reflect.Type) error {
-	return nil
-}
-
-func validateRegexp(limit string, structFieldName string, valueToCheck reflect.Value, valueType reflect.Type) error {
+func validateRegexp(method string, limit string, structFieldName string,
+	valueToCheck reflect.Value, valueType reflect.Type) error {
 	return nil
 }
 
@@ -135,14 +157,14 @@ func (v ValidationErrors) Error() string {
 		b.WriteString(err.Field)
 		b.WriteString(": ")
 		b.WriteString(err.Err.Error())
-		if len(v) != 0 && i == len(v)-1 {
-			b.WriteString(" | ")
+		if len(v) != 0 && i < len(v)-1 {
+			b.WriteString(" \\\n")
 		}
 	}
 	return b.String()
 }
 
-// This function validate fields of struct, if they have `validatorKey flag.
+// This function validate fields of struct, if they have "validatorKey" flag.
 // By default this validatorKey="validate".
 // ...
 func Validate(v interface{}) error {
@@ -162,20 +184,20 @@ func Validate(v interface{}) error {
 			fieldTag   = fld.Tag
 			fieldValue = rVal.Field(i)
 		)
-		fmt.Println(
+		fmt.Println( // TODO Remove print
 			"Fieldname: ", fieldName,
 			"\nFieldValue: ", fieldValue,
 			"\nType: ", fieldType,
 			"\nTag: ", fieldTag,
 		)
-		val, ok := fieldTag.Lookup(validatorKey)
+		val /* tag value */, ok := fieldTag.Lookup(validatorKey)
 		if !ok {
 			continue
 		}
 		if val == "" {
 			continue
 		}
-		fmt.Println("TagValue= ", val)
+		fmt.Println("TagValue= ", val) // TODO Remove print
 		extrValMap, err := extractValidators(val)
 		if err != nil {
 			return err // TODO make correct validation errors
@@ -186,7 +208,7 @@ func Validate(v interface{}) error {
 			if !ok {
 				log.Fatalf("validator %s not implemented", key)
 			}
-			err = validationFn(limit, fieldName, fieldValue, fieldType)
+			err = validationFn(key, limit, fieldName, fieldValue, fieldType)
 			if err != nil {
 				ok = errors.As(err, &valerr)
 				if !ok {
@@ -197,7 +219,7 @@ func Validate(v interface{}) error {
 		}
 	}
 	if len(errs) == 0 {
-		return errs // TODO return nil
+		return nil
 	}
 	return errs
 }
@@ -215,7 +237,7 @@ func extractValidators(val string) (map[string]string, error) {
 		}
 		if _, ok := extractedMap[strings.Trim(keyWithVal[0], " ")]; ok {
 			return nil, ErrInvalidValidator{message: fmt.Sprintf(
-				"Duplicate key \"%s\" in the same validator: %s", strings.Trim(keyWithVal[0], " "), val)}
+				"duplicate key \"%s\" in the same validator: %s", strings.Trim(keyWithVal[0], " "), val)}
 		}
 		extractedMap[strings.Trim(keyWithVal[0], " ")] = keyWithVal[1]
 	}

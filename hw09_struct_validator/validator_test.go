@@ -18,7 +18,7 @@ type (
 		Name   string
 		Age    int      `validate:"min:18|max:50"`
 		Email  string   `validate:"regexp:^\\w+@\\w+\\.\\w+$"`
-		Role   UserRole `validate:" in:admin,stuff"`
+		Role   UserRole `validate:" in:admin,stuff|len:6"`
 		Phones []string `validate:" len :11"`
 		meta   json.RawMessage
 	}
@@ -113,6 +113,7 @@ func TestValidate(t *testing.T) {
 			actualErr := Validate(tt.in)
 			require.Error(t, actualErr)
 			require.ErrorAs(t, actualErr, &valErr)
+			fmt.Println(valErr)
 			require.Equal(t, tt.expectedErr, actualErr)
 		})
 	}
