@@ -64,12 +64,44 @@ func TestValidate(t *testing.T) {
 					Err:   valuerror.ErrValidateMax{TrueLimit: 50, ActualValue: 51},
 				},
 				ValidationError{
+					Field: "Phones",
+					Err:   valuerror.ErrValidateLen{TrueLimit: 11, ActualValue: 12},
+				},
+				ValidationError{
 					Field: "Email",
 					Err:   valuerror.ErrValidateFieldByRegexp,
 				},
 			},
 		},
-		// ...
+		{
+			in: User{
+				ID:     "12345",
+				Name:   "Dart Weider",
+				Age:    16,
+				Email:  "eniken-empire.loc",
+				Role:   "admin",
+				Phones: []string{"012345678911", "01234"},
+				meta:   []byte{},
+			},
+			expectedErr: ValidationErrors{
+				ValidationError{
+					Field: "ID",
+					Err:   valuerror.ErrValidateLen{TrueLimit: 36, ActualValue: 5},
+				},
+				ValidationError{
+					Field: "Age",
+					Err:   valuerror.ErrValidateMin{TrueLimit: 18, ActualValue: 16},
+				},
+				ValidationError{
+					Field: "Phones",
+					Err:   valuerror.ErrValidateLen{TrueLimit: 11, ActualValue: 12},
+				},
+				ValidationError{
+					Field: "Email",
+					Err:   valuerror.ErrValidateFieldByRegexp,
+				},
+			},
+		},
 		// Place your code here.
 	}
 
@@ -81,7 +113,7 @@ func TestValidate(t *testing.T) {
 			actualErr := Validate(tt.in)
 			require.Error(t, actualErr)
 			require.ErrorAs(t, actualErr, &valErr)
-			require.Equal(t, actualErr, tt.expectedErr)
+			require.Equal(t, tt.expectedErr, actualErr)
 		})
 	}
 }
