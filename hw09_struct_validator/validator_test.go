@@ -184,7 +184,7 @@ func TestValidate(t *testing.T) {
 					}
 					return expectedErr[i].Field > expectedErr[j].Field
 				})
-				require.Equal(t, tt.expectedErr, actualErr)
+				require.Equal(t, expectedErr, valErr)
 			default:
 				require.NoError(t, actualErr)
 			}
@@ -273,7 +273,7 @@ func TestValidateSlices(t *testing.T) {
 					}
 					return expectedErr[i].Field > expectedErr[j].Field
 				})
-				require.Equal(t, tt.expectedErr, actualErr)
+				require.Equal(t, expectedErr, valErr)
 			default:
 				require.NoError(t, actualErr)
 			}
