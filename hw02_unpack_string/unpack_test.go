@@ -17,10 +17,10 @@ func TestUnpack(t *testing.T) {
 		{input: "", expected: ""},
 		{input: "aaa0b", expected: "aab"},
 		// uncomment if task with asterisk completed
-		// {input: `qwe\4\5`, expected: `qwe45`},
-		// {input: `qwe\45`, expected: `qwe44444`},
-		// {input: `qwe\\5`, expected: `qwe\\\\\`},
-		// {input: `qwe\\\3`, expected: `qwe\3`},
+		{input: `qwe\4\5`, expected: `qwe45`},
+		{input: `qwe\45`, expected: `qwe44444`},
+		{input: `qwe\\5`, expected: `qwe\\\\\`},
+		{input: `qwe\\\3`, expected: `qwe\3`},
 	}
 
 	for _, tc := range tests {
@@ -29,6 +29,26 @@ func TestUnpack(t *testing.T) {
 			result, err := Unpack(tc.input)
 			require.NoError(t, err)
 			require.Equal(t, tc.expected, result)
+		})
+	}
+}
+
+func TestInvalidStringUnpack(t *testing.T) {
+	tests := []struct {
+		input               string
+		expectedErrorString string
+	}{
+		{input: "45", expectedErrorString: "invalid string"},
+		{input: "3abc", expectedErrorString: "invalid string"},
+		{input: "aaa10b", expectedErrorString: "invalid string"},
+	}
+
+	for _, tc := range tests {
+		tc := tc
+		t.Run(tc.input, func(t *testing.T) {
+			_, err := Unpack(tc.input)
+			require.Error(t, err)
+			require.EqualError(t, err, tc.expectedErrorString)
 		})
 	}
 }
