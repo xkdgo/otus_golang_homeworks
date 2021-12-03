@@ -6,10 +6,7 @@ import (
 	"strings"
 )
 
-var (
-	// ErrValidateMax           = errors.New("greater than max")
-	ErrValidateFieldByRegexp = errors.New("doesn`t match regular expression")
-)
+var ErrValidateFieldByRegexp = errors.New("doesn`t match regular expression")
 
 type ErrValidateLen struct {
 	TrueLimit   int
