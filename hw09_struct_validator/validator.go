@@ -58,7 +58,6 @@ var validationFuncMap = map[string]validationFunc{
 func validateLen(method string, limit string, structFieldName string,
 	valueToCheck reflect.Value, valueType reflect.Type) error {
 	limitInt, err := strconv.Atoi(limit)
-	fmt.Println(structFieldName, valueType.Kind())
 	if err != nil {
 		return ErrInvalidValidator{fmt.Sprintf("%s should be integer", limit)}
 	}
@@ -198,7 +197,7 @@ func validateIn(method string, limit string, structFieldName string,
 			if !ok {
 				return ValidationError{
 					Field: structFieldName,
-					Err:   valuerror.ErrValidateIn{TrueLimit: limit, ActualValue: fmt.Sprintf("%d", valueToCheck.Int())},
+					Err:   valuerror.ErrValidateIn{TrueLimit: limit, ActualValue: fmt.Sprintf("%d", elem)},
 				}
 			}
 		}
@@ -242,7 +241,6 @@ func validateRegexp(method string, limit string, structFieldName string,
 	}
 	switch {
 	case valueType.Kind().String() == stringType:
-		fmt.Println("IM HERE", valueToCheck.String())
 		if !regex.MatchString(valueToCheck.String()) {
 			return ValidationError{
 				Field: structFieldName,
@@ -294,7 +292,7 @@ func Validate(v interface{}) error {
 	var valerr ValidationError
 	rVal := reflect.ValueOf(v)
 	if rVal.Kind() != reflect.Struct {
-		return nil
+		return ErrInvalidValidator{"Validate support for structs only"}
 	}
 	structRval := rVal.Type()
 	errs = make(ValidationErrors, 0, structRval.NumField())
@@ -306,12 +304,6 @@ func Validate(v interface{}) error {
 			fieldTag   = fld.Tag
 			fieldValue = rVal.Field(i)
 		)
-		fmt.Println( // TODO Remove print
-			"Fieldname: ", fieldName,
-			"\nFieldValue: ", fieldValue,
-			"\nType: ", fieldType,
-			"\nTag: ", fieldTag,
-		)
 		val /* tag value */, ok := fieldTag.Lookup(validatorKey)
 		if !ok {
 			continue
@@ -319,12 +311,10 @@ func Validate(v interface{}) error {
 		if val == "" {
 			continue
 		}
-		fmt.Println("TagValue= ", val) // TODO Remove print
 		extrValMap, err := extractValidators(val)
 		if err != nil {
-			return err // TODO make correct validation errors
+			return err
 		}
-		fmt.Printf("%#v\n", extrValMap)
 		for key, limit := range extrValMap {
 			validationFn, ok := validationFuncMap[key]
 			if !ok {

@@ -3,6 +3,7 @@ package hw09structvalidator
 import (
 	"encoding/json"
 	"fmt"
+	"sort"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -138,6 +139,25 @@ func TestValidate(t *testing.T) {
 			wantErr:     false,
 			expectedErr: nil,
 		},
+		{
+			in: Response{
+				Code: 200,
+			},
+			wantErr:     false,
+			expectedErr: nil,
+		},
+		{
+			in: Response{
+				Code: 201,
+			},
+			wantErr: true,
+			expectedErr: ValidationErrors{
+				ValidationError{
+					Field: "Code",
+					Err:   valuerror.ErrValidateIn{TrueLimit: "200,404,500", ActualValue: "201"},
+				},
+			},
+		},
 	}
 
 	for i, tt := range tests {
@@ -145,12 +165,114 @@ func TestValidate(t *testing.T) {
 			tt := tt
 			t.Parallel()
 			var valErr ValidationErrors
+			var expectedErr ValidationErrors
 			actualErr := Validate(tt.in)
 			switch {
 			case tt.wantErr:
 				require.Error(t, actualErr)
 				require.ErrorAs(t, actualErr, &valErr)
-				fmt.Println(valErr)
+				require.ErrorAs(t, tt.expectedErr, &expectedErr)
+				sort.Slice(valErr, func(i, j int) bool {
+					if valErr[i].Field == valErr[j].Field {
+						return valErr[i].Err.Error() < valErr[j].Err.Error()
+					}
+					return valErr[i].Field > valErr[j].Field
+				})
+				sort.Slice(expectedErr, func(i, j int) bool {
+					if expectedErr[i].Field == expectedErr[j].Field {
+						return expectedErr[i].Err.Error() < expectedErr[j].Err.Error()
+					}
+					return expectedErr[i].Field > expectedErr[j].Field
+				})
+				require.Equal(t, tt.expectedErr, actualErr)
+			default:
+				require.NoError(t, actualErr)
+			}
+		})
+	}
+}
+
+func TestValidateSlices(t *testing.T) {
+	type Slices struct {
+		StringsCheckIn  []string `validate:"in:az,buki,vedi"`
+		StringsCheckLen []string `validate:"len:4"`
+		Emails          []string `validate:"regexp:^\\w+@\\w+\\.\\w+$"`
+		Ages            []int    `validate:"min:10|max:16"`
+		Limits          []int    `validate:"in:4,5,6"`
+	}
+	tests := []struct {
+		in          interface{}
+		wantErr     bool
+		expectedErr error
+	}{
+
+		{
+			in: Slices{
+				StringsCheckIn:  []string{"buki", "az", "vedi", "az"},
+				StringsCheckLen: []string{"1234", "4321", "abcd"},
+				Emails:          []string{"good1@dot.com", "good2@dot.com", "good3@dot.com"},
+				Ages:            []int{11, 12, 13, 14},
+				Limits:          []int{6, 6, 4, 4, 5},
+			},
+			wantErr:     false,
+			expectedErr: nil,
+		},
+		{
+			in: Slices{
+				StringsCheckIn:  []string{"buk", "a", "ved", "az"},
+				StringsCheckLen: []string{"123", "432", "abc"},
+				Emails:          []string{"bad1-dot.com", "bad2-dot.com", "bad3-dot.com"},
+				Ages:            []int{8, 18},
+				Limits:          []int{1, 2, 3},
+			},
+			wantErr: true,
+			expectedErr: ValidationErrors{
+				ValidationError{
+					Field: "StringsCheckIn", Err: valuerror.ErrValidateIn{TrueLimit: "az,buki,vedi", ActualValue: "buk"},
+				},
+				ValidationError{
+					Field: "StringsCheckLen", Err: valuerror.ErrValidateLen{TrueLimit: 4, ActualValue: 3},
+				},
+				ValidationError{
+					Field: "Emails", Err: valuerror.ErrValidateFieldByRegexp,
+				},
+				ValidationError{
+					Field: "Ages", Err: valuerror.ErrValidateMin{TrueLimit: 10, ActualValue: 8},
+				},
+				ValidationError{
+					Field: "Ages", Err: valuerror.ErrValidateMax{TrueLimit: 16, ActualValue: 18},
+				},
+				ValidationError{
+					Field: "Limits", Err: valuerror.ErrValidateIn{TrueLimit: "4,5,6", ActualValue: "1"},
+				},
+			},
+		},
+	}
+
+	for i, tt := range tests {
+		t.Run(fmt.Sprintf("case %d", i), func(t *testing.T) {
+			tt := tt
+			t.Parallel()
+			var valErr ValidationErrors
+			var expectedErr ValidationErrors
+			actualErr := Validate(tt.in)
+			switch {
+			case tt.wantErr:
+				require.Error(t, actualErr)
+				require.ErrorAs(t, actualErr, &valErr)
+				require.ErrorAs(t, tt.expectedErr, &expectedErr)
+				sort.Slice(valErr, func(i, j int) bool {
+					if valErr[i].Field == valErr[j].Field {
+						return valErr[i].Err.Error() < valErr[j].Err.Error()
+					}
+					return valErr[i].Field > valErr[j].Field
+				})
+				sort.Slice(expectedErr, func(i, j int) bool {
+					if expectedErr[i].Field == expectedErr[j].Field {
+						return expectedErr[i].Err.Error() < expectedErr[j].Err.Error()
+					}
+					return expectedErr[i].Field > expectedErr[j].Field
+				})
 				require.Equal(t, tt.expectedErr, actualErr)
 			default:
 				require.NoError(t, actualErr)
