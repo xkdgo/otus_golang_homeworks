@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"reflect"
+	"regexp"
 	"strconv"
 	"strings"
 
@@ -14,6 +15,13 @@ import (
 var validatorKey = "validate"
 
 var ErrExtractValidator = errors.New("some extractor error")
+
+const (
+	stringType      = "string"
+	stringSliceType = "[]string"
+	intType         = "int"
+	intSliceType    = "[]int"
+)
 
 type ErrInvalidValidator struct {
 	message string
@@ -55,14 +63,14 @@ func validateLen(method string, limit string, structFieldName string,
 		return ErrInvalidValidator{fmt.Sprintf("%s should be integer", limit)}
 	}
 	switch {
-	case valueType.Kind().String() == "string":
+	case valueType.Kind().String() == stringType:
 		if len(valueToCheck.String()) != limitInt {
 			return ValidationError{
 				Field: structFieldName,
 				Err:   valuerror.ErrValidateLen{TrueLimit: limitInt, ActualValue: len(valueToCheck.String())},
 			}
 		}
-	case valueType.String() == "[]string":
+	case valueType.String() == stringSliceType:
 		elemInterface := valueToCheck.Interface()
 		elemSlice, ok := elemInterface.([]string)
 		if !ok {
@@ -90,7 +98,7 @@ func validateMinMax(method string, limit string, structFieldName string,
 		return ErrInvalidValidator{fmt.Sprintf("%s should be integer", limit)}
 	}
 	switch {
-	case valueType.Kind().String() == "int":
+	case valueType.Kind().String() == intType:
 		switch method {
 		case "min":
 			if int(valueToCheck.Int()) < limitInt {
@@ -108,7 +116,7 @@ func validateMinMax(method string, limit string, structFieldName string,
 			}
 		}
 
-	case valueType.String() == "[]int":
+	case valueType.String() == intSliceType:
 		elemInterface := valueToCheck.Interface()
 		elemSlice, ok := elemInterface.([]int)
 		if !ok {
@@ -163,10 +171,10 @@ func validateIn(method string, limit string, structFieldName string,
 	valueToCheck reflect.Value, valueType reflect.Type) error {
 	limitSlice := strings.Split(limit, ",")
 	switch {
-	case valueType.Kind().String() == "int":
+	case valueType.Kind().String() == intType:
 		limitIntMap, err := convSliceAtoiMap(limitSlice)
 		if err != nil {
-			return ErrInvalidValidator{fmt.Sprintf("for %s limit %s should be digits, %s", valueToCheck, limit, err.Error())}
+			return ErrInvalidValidator{fmt.Sprintf("for %s limit %s should be integer, %s", valueToCheck, limit, err.Error())}
 		}
 		_, ok := limitIntMap[int(valueToCheck.Int())]
 		if !ok {
@@ -175,10 +183,10 @@ func validateIn(method string, limit string, structFieldName string,
 				Err:   valuerror.ErrValidateIn{TrueLimit: limit, ActualValue: fmt.Sprintf("%d", valueToCheck.Int())},
 			}
 		}
-	case valueType.String() == "[]int":
+	case valueType.String() == intSliceType:
 		limitIntMap, err := convSliceAtoiMap(limitSlice)
 		if err != nil {
-			return ErrInvalidValidator{fmt.Sprintf("for %s limit %s should be digits, %s", valueToCheck, limit, err.Error())}
+			return ErrInvalidValidator{fmt.Sprintf("for %s limit %s should be integer, %s", valueToCheck, limit, err.Error())}
 		}
 		elemInterface := valueToCheck.Interface()
 		elemSlice, ok := elemInterface.([]int)
@@ -194,7 +202,7 @@ func validateIn(method string, limit string, structFieldName string,
 				}
 			}
 		}
-	case valueType.Kind().String() == "string":
+	case valueType.Kind().String() == stringType:
 		limitStringMap := convSliceStringMap(limitSlice)
 		_, ok := limitStringMap[valueToCheck.String()]
 		if !ok {
@@ -203,7 +211,7 @@ func validateIn(method string, limit string, structFieldName string,
 				Err:   valuerror.ErrValidateIn{TrueLimit: limit, ActualValue: valueToCheck.String()},
 			}
 		}
-	case valueType.String() == "[]string":
+	case valueType.String() == stringSliceType:
 		elemInterface := valueToCheck.Interface()
 		elemSlice, ok := elemInterface.([]string)
 		if !ok {
@@ -228,6 +236,37 @@ func validateIn(method string, limit string, structFieldName string,
 
 func validateRegexp(method string, limit string, structFieldName string,
 	valueToCheck reflect.Value, valueType reflect.Type) error {
+	regex, err := regexp.Compile(limit)
+	if err != nil {
+		return ErrInvalidValidator{fmt.Sprintf("could not compile regex %#v", limit)}
+	}
+	switch {
+	case valueType.Kind().String() == stringType:
+		fmt.Println("IM HERE", valueToCheck.String())
+		if !regex.MatchString(valueToCheck.String()) {
+			return ValidationError{
+				Field: structFieldName,
+				Err:   valuerror.ErrValidateFieldByRegexp,
+			}
+		}
+	case valueType.String() == stringSliceType:
+		elemInterface := valueToCheck.Interface()
+		elemSlice, ok := elemInterface.([]string)
+		if !ok {
+			return ErrInvalidValidator{fmt.Sprintf("could not assert %#v to string slice", elemInterface)}
+		}
+		for _, elem := range elemSlice {
+			if !regex.MatchString(elem) {
+				return ValidationError{
+					Field: structFieldName,
+					Err:   valuerror.ErrValidateFieldByRegexp,
+				}
+			}
+		}
+	default:
+		return ErrInvalidValidator{fmt.Sprintf(
+			"field %s unsupported type %s for method \"%s\"", structFieldName, valueType, method)}
+	}
 	return nil
 }
 
@@ -314,7 +353,7 @@ func extractValidators(val string) (map[string]string, error) {
 	validateCandidates := strings.Split(val, "|")
 	extractedMap := make(map[string]string, len(validateCandidates))
 	for _, candidate := range validateCandidates {
-		keyWithVal := strings.Split(candidate, ":")
+		keyWithVal := strings.SplitN(candidate, ":", 2)
 		if len(keyWithVal) != 2 {
 			return nil, ErrInvalidValidator{message: fmt.Sprintf("validator should be func:limit but got %s", val)}
 		}
