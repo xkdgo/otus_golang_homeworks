@@ -139,8 +139,90 @@ func validateMinMax(method string, limit string, structFieldName string,
 	return nil
 }
 
+func convSliceAtoiMap(sliceWithStrings []string) (map[int]struct{}, error) {
+	resultIntMap := make(map[int]struct{}, len(sliceWithStrings))
+	for _, strValue := range sliceWithStrings {
+		intValue, err := strconv.Atoi(strValue)
+		if err != nil {
+			return nil, err
+		}
+		resultIntMap[intValue] = struct{}{}
+	}
+	return resultIntMap, nil
+}
+
+func convSliceStringMap(sliceWithStrings []string) map[string]struct{} {
+	resultIntMap := make(map[string]struct{}, len(sliceWithStrings))
+	for _, strValue := range sliceWithStrings {
+		resultIntMap[strValue] = struct{}{}
+	}
+	return resultIntMap
+}
+
 func validateIn(method string, limit string, structFieldName string,
 	valueToCheck reflect.Value, valueType reflect.Type) error {
+	limitSlice := strings.Split(limit, ",")
+	switch {
+	case valueType.Kind().String() == "int":
+		limitIntMap, err := convSliceAtoiMap(limitSlice)
+		if err != nil {
+			return ErrInvalidValidator{fmt.Sprintf("for %s limit %s should be digits, %s", valueToCheck, limit, err.Error())}
+		}
+		_, ok := limitIntMap[int(valueToCheck.Int())]
+		if !ok {
+			return ValidationError{
+				Field: structFieldName,
+				Err:   valuerror.ErrValidateIn{TrueLimit: limit, ActualValue: fmt.Sprintf("%d", valueToCheck.Int())},
+			}
+		}
+	case valueType.String() == "[]int":
+		limitIntMap, err := convSliceAtoiMap(limitSlice)
+		if err != nil {
+			return ErrInvalidValidator{fmt.Sprintf("for %s limit %s should be digits, %s", valueToCheck, limit, err.Error())}
+		}
+		elemInterface := valueToCheck.Interface()
+		elemSlice, ok := elemInterface.([]int)
+		if !ok {
+			return ErrInvalidValidator{fmt.Sprintf("could not assert %#v to int slice", elemInterface)}
+		}
+		for _, elem := range elemSlice {
+			_, ok := limitIntMap[elem]
+			if !ok {
+				return ValidationError{
+					Field: structFieldName,
+					Err:   valuerror.ErrValidateIn{TrueLimit: limit, ActualValue: fmt.Sprintf("%d", valueToCheck.Int())},
+				}
+			}
+		}
+	case valueType.Kind().String() == "string":
+		limitStringMap := convSliceStringMap(limitSlice)
+		_, ok := limitStringMap[valueToCheck.String()]
+		if !ok {
+			return ValidationError{
+				Field: structFieldName,
+				Err:   valuerror.ErrValidateIn{TrueLimit: limit, ActualValue: valueToCheck.String()},
+			}
+		}
+	case valueType.String() == "[]string":
+		elemInterface := valueToCheck.Interface()
+		elemSlice, ok := elemInterface.([]string)
+		if !ok {
+			return ErrInvalidValidator{fmt.Sprintf("could not assert %#v to string slice", elemInterface)}
+		}
+		limitStringMap := convSliceStringMap(limitSlice)
+		for _, elem := range elemSlice {
+			_, ok = limitStringMap[elem]
+			if !ok {
+				return ValidationError{
+					Field: structFieldName,
+					Err:   valuerror.ErrValidateIn{TrueLimit: limit, ActualValue: elem},
+				}
+			}
+		}
+	default:
+		return ErrInvalidValidator{fmt.Sprintf(
+			"field %s unsupported type %s for method \"%s\"", structFieldName, valueType, method)}
+	}
 	return nil
 }
 

@@ -52,3 +52,17 @@ func (e ErrValidateMin) Error() string {
 	b.WriteString(strconv.Itoa(e.TrueLimit))
 	return b.String()
 }
+
+type ErrValidateIn struct {
+	TrueLimit   string
+	ActualValue string
+}
+
+func (e ErrValidateIn) Error() string {
+	b := strings.Builder{}
+	b.WriteString("value is ")
+	b.WriteString(e.ActualValue)
+	b.WriteString(" should be one of ")
+	b.WriteString(e.TrueLimit)
+	return b.String()
+}
