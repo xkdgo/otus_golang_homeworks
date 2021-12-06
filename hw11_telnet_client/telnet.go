@@ -80,7 +80,7 @@ OUTER:
 			break OUTER
 		default:
 			if !scanner.Scan() {
-				log.Printf("Disconnected from remote server")
+				log.Printf("Disconnected from remote server %s", t.Address)
 				break OUTER
 			}
 			text := scanner.Text()
