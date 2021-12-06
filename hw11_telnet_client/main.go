@@ -40,12 +40,12 @@ func main() {
 	go func(wg *sync.WaitGroup, client TelnetClient) {
 		defer client.Close()
 		defer wg.Done()
-		telnetClient.Send()
+		client.Send()
 	}(&wg, telnetClient)
 	go func(wg *sync.WaitGroup, client TelnetClient) {
 		defer client.Close()
 		defer wg.Done()
-		telnetClient.Receive()
+		client.Receive()
 	}(&wg, telnetClient)
 	wg.Wait()
 }
