@@ -3,11 +3,17 @@ package main
 import (
 	"bufio"
 	"context"
+	"errors"
 	"fmt"
 	"io"
-	"log"
 	"net"
+	"os"
 	"time"
+)
+
+var (
+	errConnectionClosedbyPeer = errors.New("...Connection was closed by peer")
+	errEOF                    = errors.New("...EOF")
 )
 
 type TelnetClient interface {
@@ -19,25 +25,25 @@ type TelnetClient interface {
 
 func NewTelnetClient(address string, timeout time.Duration, in io.ReadCloser, out io.Writer) TelnetClient {
 	ctx := context.Background()
-	ctx, cancel := context.WithTimeout(ctx, timeout)
+	ctx, cancelTimeout := context.WithTimeout(ctx, timeout)
 	return &TelnetConnection{
-		Address: address,
-		Ctx:     ctx,
-		Cancel:  cancel,
-		In:      in,
-		Out:     out,
+		Address:       address,
+		Ctx:           ctx,
+		cancelTimeout: cancelTimeout,
+		In:            in,
+		Out:           out,
 	}
 }
 
 // Place your code here.
 // P.S. Author's solution takes no more than 50 lines.
 type TelnetConnection struct {
-	Address    string
-	Ctx        context.Context
-	Cancel     context.CancelFunc
-	In         io.ReadCloser
-	Out        io.Writer
-	Connection net.Conn
+	Address       string
+	Ctx           context.Context
+	cancelTimeout context.CancelFunc
+	In            io.ReadCloser
+	Out           io.Writer
+	Connection    net.Conn
 }
 
 func (t *TelnetConnection) Connect() error {
@@ -48,45 +54,46 @@ func (t *TelnetConnection) Connect() error {
 }
 
 func (t *TelnetConnection) Close() error {
-	t.Cancel()
+	t.cancelTimeout()
 	return t.Connection.Close()
 }
 
 func (t *TelnetConnection) Send() error {
 	scanner := bufio.NewScanner(t.In)
-OUTER:
 	for {
 		select {
 		case <-t.Ctx.Done():
-			break OUTER
+			return nil
 		default:
 			if !scanner.Scan() {
-				break OUTER
+				fmt.Fprintf(os.Stderr, "%v\n", errEOF)
+				return nil
 			}
 			str := scanner.Text()
-			t.Connection.Write([]byte(fmt.Sprintf("%s\n", str)))
+			_, err := t.Connection.Write([]byte(fmt.Sprintf("%s\n", str)))
+			if err != nil {
+				return err
+			}
 		}
 	}
-	log.Printf("Finished writeRoutine")
-	return nil
 }
 
 func (t *TelnetConnection) Receive() error {
 	scanner := bufio.NewScanner(t.Connection)
-OUTER:
 	for {
 		select {
 		case <-t.Ctx.Done():
-			break OUTER
+			return nil
 		default:
 			if !scanner.Scan() {
-				log.Printf("Disconnected from remote server %s", t.Address)
-				break OUTER
+				fmt.Fprintf(os.Stderr, "%v\n", errConnectionClosedbyPeer)
+				return nil
 			}
 			text := scanner.Text()
-			t.Out.Write([]byte(fmt.Sprintf("%s\n", text)))
+			_, err := t.Out.Write([]byte(fmt.Sprintf("%s\n", text)))
+			if err != nil {
+				return err
+			}
 		}
 	}
-	log.Printf("Finished readRoutine")
-	return nil
 }
