@@ -68,6 +68,7 @@ func processFileContent(pathToEnvFile string) (string, error) {
 		log.Println("Open ", err)
 		return "", err
 	}
+	defer fd.Close()
 	bufReader := bufio.NewReader(fd)
 	bytesEnvVar, err := bufReader.ReadBytes(byte('\n'))
 	if err != nil && !errors.Is(err, io.EOF) {
