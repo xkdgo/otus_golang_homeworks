@@ -36,6 +36,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("Could not connect to server %s", address)
 	}
+	log.Printf("Connected to server %s", address)
 	wg.Add(2)
 	go func(wg *sync.WaitGroup, client TelnetClient) {
 		defer client.Close()
