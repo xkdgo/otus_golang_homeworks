@@ -5,11 +5,15 @@ import (
 	"log"
 	"os"
 	"os/exec"
+	"sort"
+	"strings"
 )
 
 const (
 	CmdErrorCode = 1
 )
+
+var errParseEnviron = errors.New("couldnt parse environs")
 
 // RunCmd runs a command + arguments (cmd) with environment variables from env.
 func RunCmd(cmd []string, env Environment) (returnCode int) {
@@ -18,16 +22,21 @@ func RunCmd(cmd []string, env Environment) (returnCode int) {
 		return CmdErrorCode
 	}
 	command := exec.Command(cmd[0], cmd[1:]...) //nolint:gosec
-
+	currentEnvs := os.Environ()
+	envMap, err := collectCommandEnvMap(currentEnvs)
+	if err != nil {
+		log.Println(err)
+		return CmdErrorCode
+	}
 	for envname, envvalue := range env {
 		switch envvalue.NeedRemove {
 		case true:
-			os.Unsetenv(envname)
+			delete(envMap, envname)
 		case false:
-			os.Setenv(envname, envvalue.Value)
+			envMap[envname] = envvalue.Value
 		}
 	}
-	command.Env = os.Environ()
+	command.Env = environ(envMap)
 	command.Stdin = os.Stdin
 	command.Stdout = os.Stdout
 	command.Stderr = os.Stderr
@@ -42,4 +51,30 @@ func RunCmd(cmd []string, env Environment) (returnCode int) {
 		}
 	}
 	return returnCode
+}
+
+func collectCommandEnvMap(envs []string) (map[string]string, error) {
+	envsMap := make(map[string]string, len(envs))
+	for _, envItem := range envs {
+		keyVal := strings.SplitN(envItem, "=", 2)
+		if len(keyVal) != 2 {
+			return nil, errParseEnviron
+		}
+		envsMap[keyVal[0]] = keyVal[1]
+	}
+	return envsMap, nil
+}
+
+func environ(envMap map[string]string) []string {
+	environSlice := make([]string, 0, len(envMap))
+	b := strings.Builder{}
+	for envName, envVal := range envMap {
+		b.WriteString(envName)
+		b.WriteString("=")
+		b.WriteString(envVal)
+		environSlice = append(environSlice, b.String())
+		b.Reset()
+	}
+	sort.Strings(environSlice)
+	return environSlice
 }
