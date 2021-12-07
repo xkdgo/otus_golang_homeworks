@@ -9,23 +9,38 @@ type (
 type Stage func(in In) (out Out)
 
 func ExecutePipeline(in In, done In, stages ...Stage) Out {
+	out := pipelinePump(done, in)
 	for _, stage := range stages {
-		valueStream := make(chan interface{})
-		go func(done In, in In) {
-			defer close(valueStream)
-			for {
-				select {
-				case <-done:
-					return
-				case v, ok := <-in:
-					if !ok {
-						return
-					}
-					valueStream <- v
-				}
-			}
-		}(done, in)
-		in = stage(valueStream)
+		out = stage(pipelinePump(done, out))
 	}
-	return in
+	return out
+}
+
+func pipelinePump(done In, in In) Out {
+	valueStream := make(Bi)
+	go func() {
+		defer func() {
+			close(valueStream)
+			for range in {
+				// drain in channel
+			}
+		}()
+		for {
+			select {
+			case <-done:
+				return
+			default:
+			}
+			select {
+			case <-done:
+				return
+			case v, ok := <-in:
+				if !ok {
+					return
+				}
+				valueStream <- v
+			}
+		}
+	}()
+	return valueStream
 }
