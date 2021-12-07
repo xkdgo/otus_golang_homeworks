@@ -35,8 +35,6 @@ func NewTelnetClient(address string, timeout time.Duration, in io.ReadCloser, ou
 	}
 }
 
-// Place your code here.
-// P.S. Author's solution takes no more than 50 lines.
 type TelnetConnection struct {
 	Address       string
 	Ctx           context.Context
