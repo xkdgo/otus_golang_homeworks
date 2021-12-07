@@ -32,10 +32,10 @@ func Copy(fromPath, toPath string, offset, limit int64) error {
 		src.Seek(offset, io.SeekStart)
 		lenSrcFile -= offset
 	}
-	switch {
-	case lenSrcFile == 0:
+	if lenSrcFile == 0 {
 		return ErrUnsupportedFile
-	case limit == 0 || limit > lenSrcFile:
+	}
+	if limit == 0 || limit > lenSrcFile {
 		limit = lenSrcFile
 	}
 	dst, err := os.Create(toPath)
