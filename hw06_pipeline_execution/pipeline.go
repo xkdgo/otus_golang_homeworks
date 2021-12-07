@@ -8,6 +8,8 @@ type (
 
 type Stage func(in In) (out Out)
 
+// in ->  pipelinePump -> st -> pipelinePump -> ... -> out
+
 func ExecutePipeline(in In, done In, stages ...Stage) Out {
 	out := pipelinePump(done, in)
 	for _, stage := range stages {
