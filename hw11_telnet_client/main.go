@@ -71,6 +71,6 @@ func main() {
 	select {
 	case <-stopCh:
 	case <-sigCh:
-		close(exit)
+		exit <- struct{}{}
 	}
 }
