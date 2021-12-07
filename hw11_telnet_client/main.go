@@ -38,32 +38,8 @@ func main() {
 	}
 	log.Printf("Connected to %s", address)
 	wg.Add(2)
-	go func(wg *sync.WaitGroup, client TelnetClient) {
-		defer client.Close()
-		defer wg.Done()
-		select {
-		case <-exit:
-			return
-		default:
-			err := client.Send()
-			if err != nil {
-				return
-			}
-		}
-	}(&wg, telnetClient)
-	go func(wg *sync.WaitGroup, client TelnetClient) {
-		defer client.Close()
-		defer wg.Done()
-		select {
-		case <-exit:
-			return
-		default:
-			err := client.Receive()
-			if err != nil {
-				return
-			}
-		}
-	}(&wg, telnetClient)
+	go SendMessage(exit, &wg, telnetClient)
+	go ReceiveMessage(exit, &wg, telnetClient)
 	go func(wg *sync.WaitGroup) {
 		wg.Wait()
 		stopCh <- struct{}{}
@@ -71,6 +47,34 @@ func main() {
 	select {
 	case <-stopCh:
 	case <-sigCh:
-		exit <- struct{}{}
+		close(exit)
+	}
+}
+
+func SendMessage(exit chan struct{}, wg *sync.WaitGroup, client TelnetClient) {
+	defer client.Close()
+	defer wg.Done()
+	select {
+	case <-exit:
+		return
+	default:
+		err := client.Send()
+		if err != nil {
+			return
+		}
+	}
+}
+
+func ReceiveMessage(exit chan struct{}, wg *sync.WaitGroup, client TelnetClient) {
+	defer client.Close()
+	defer wg.Done()
+	select {
+	case <-exit:
+		return
+	default:
+		err := client.Receive()
+		if err != nil {
+			return
+		}
 	}
 }
