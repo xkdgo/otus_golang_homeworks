@@ -33,6 +33,10 @@ type Emails struct {
 func newCountDomains(r io.Reader, domain string) (DomainStat, error) {
 	result := make(DomainStat)
 	b := strings.Builder{}
+	b.WriteRune('.')
+	b.WriteString(domain)
+	suffixDomain := b.String()
+	b.Reset()
 	scanner := bufio.NewScanner(r)
 	for scanner.Scan() {
 		var user Emails
@@ -40,12 +44,8 @@ func newCountDomains(r io.Reader, domain string) (DomainStat, error) {
 		if err := json.Unmarshal(line, &user); err != nil {
 			return nil, err
 		}
-		b.WriteRune('.')
-		b.WriteString(domain)
 		afterAt := strings.ToLower(strings.SplitN(user.Email, "@", 2)[1])
-		matched := strings.HasSuffix(afterAt, b.String())
-		b.Reset()
-
+		matched := strings.HasSuffix(afterAt, suffixDomain)
 		if matched {
 			result[afterAt]++
 		}
