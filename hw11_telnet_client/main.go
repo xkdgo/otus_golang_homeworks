@@ -33,8 +33,9 @@ func main() {
 		log.Fatalf("You should enter \"address port\"")
 	}
 	telnetClient := NewTelnetClient(address, timeout, os.Stdin, os.Stdout)
-	if telnetClient.Connect() != nil {
-		log.Fatalf("Could not connect to server %s", address)
+	err := telnetClient.Connect()
+	if err != nil {
+		log.Fatalf("Could not connect to server %s\n%q", address, err)
 	}
 	log.Printf("Connected to %s", address)
 	wg.Add(2)
