@@ -11,6 +11,8 @@ import (
 	"time"
 )
 
+const defaultTelnetPort = "23"
+
 func main() {
 	var timeout time.Duration
 	var address string
@@ -24,7 +26,7 @@ func main() {
 	args := flag.Args()
 	switch len(args) {
 	case 1:
-		address = net.JoinHostPort(args[0], "23")
+		address = net.JoinHostPort(args[0], defaultTelnetPort)
 	case 2:
 		address = net.JoinHostPort(args[0], args[1])
 	default:
