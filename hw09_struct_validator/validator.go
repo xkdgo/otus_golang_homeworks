@@ -192,8 +192,7 @@ func validateIn(method string, limit string, structFieldName string,
 			return ErrInvalidValidator{fmt.Sprintf("could not assert %#v to int slice", elemInterface)}
 		}
 		for _, elem := range elemSlice {
-			_, ok := limitIntMap[elem]
-			if !ok {
+			if _, ok := limitIntMap[elem]; !ok {
 				return ValidationError{
 					Field: structFieldName,
 					Err:   valuerror.ErrValidateIn{TrueLimit: limit, ActualValue: fmt.Sprintf("%d", elem)},
@@ -202,8 +201,7 @@ func validateIn(method string, limit string, structFieldName string,
 		}
 	case valueType.Kind().String() == stringType:
 		limitStringMap := convSliceStringMap(limitSlice)
-		_, ok := limitStringMap[valueToCheck.String()]
-		if !ok {
+		if _, ok := limitStringMap[valueToCheck.String()]; !ok {
 			return ValidationError{
 				Field: structFieldName,
 				Err:   valuerror.ErrValidateIn{TrueLimit: limit, ActualValue: valueToCheck.String()},
@@ -217,8 +215,7 @@ func validateIn(method string, limit string, structFieldName string,
 		}
 		limitStringMap := convSliceStringMap(limitSlice)
 		for _, elem := range elemSlice {
-			_, ok = limitStringMap[elem]
-			if !ok {
+			if _, ok = limitStringMap[elem]; !ok {
 				return ValidationError{
 					Field: structFieldName,
 					Err:   valuerror.ErrValidateIn{TrueLimit: limit, ActualValue: elem},
@@ -321,8 +318,7 @@ func Validate(v interface{}) error {
 			}
 			err = validationFn(key, limit, fieldName, fieldValue, fieldType)
 			if err != nil {
-				ok = errors.As(err, &valerr)
-				if !ok {
+				if ok = errors.As(err, &valerr); !ok {
 					return err
 				}
 				errs = append(errs, valerr)
