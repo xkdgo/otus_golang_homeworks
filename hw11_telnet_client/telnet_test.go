@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"io/ioutil"
 	"net"
+	"strings"
 	"sync"
 	"testing"
 	"time"
@@ -61,5 +62,29 @@ func TestTelnetClient(t *testing.T) {
 		}()
 
 		wg.Wait()
+	})
+	t.Run("test unexistent host", func(t *testing.T) {
+		netOpErr := &net.OpError{}
+		timeout, err := time.ParseDuration("10s")
+		require.NoError(t, err)
+		in := &bytes.Buffer{}
+		out := &bytes.Buffer{}
+		client := NewTelnetClient("localhost:4243", timeout, ioutil.NopCloser(in), out)
+		err = client.Connect()
+		require.ErrorAs(t, err, &netOpErr)
+		require.True(t, strings.Contains(netOpErr.Err.Error(), "connect: connection refused"))
+	})
+	t.Run("test dial timeout", func(t *testing.T) {
+		timeout, err := time.ParseDuration("5s")
+		netOpErr := &net.OpError{}
+		require.NoError(t, err)
+		in := &bytes.Buffer{}
+		out := &bytes.Buffer{}
+		client := NewTelnetClient("1.1.1.1:8080", timeout, ioutil.NopCloser(in), out)
+		t1 := time.Now()
+		err = client.Connect()
+		require.InDelta(t, timeout, time.Since(t1), float64(20*time.Millisecond))
+		require.ErrorAs(t, err, &netOpErr)
+		require.True(t, strings.Contains(netOpErr.Err.Error(), "i/o timeout"))
 	})
 }
