@@ -300,14 +300,14 @@ func Validate(v interface{}) error {
 			fieldTag   = fld.Tag
 			fieldValue = rVal.Field(i)
 		)
-		val /* tag value */, ok := fieldTag.Lookup(validatorKey)
+		tagValue, ok := fieldTag.Lookup(validatorKey)
 		if !ok {
 			continue
 		}
-		if val == "" {
+		if tagValue == "" {
 			continue
 		}
-		extrValMap, err := extractValidators(val)
+		extrValMap, err := extractValidators(tagValue)
 		if err != nil {
 			return err
 		}
