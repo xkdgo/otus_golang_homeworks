@@ -16,8 +16,6 @@ const defaultTelnetPort = "23"
 func main() {
 	var timeout time.Duration
 	var address string
-	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGINT)
-	defer cancel()
 	flag.DurationVar(&timeout, "timeout", 10*time.Second, "timeout of telnet operation")
 	flag.Parse()
 	args := flag.Args()
@@ -27,18 +25,20 @@ func main() {
 	case 2:
 		address = net.JoinHostPort(args[0], args[1])
 	default:
-		log.Fatalf("You should enter \"address port\"")
+		log.Printf("You should enter \"address port\"")
+		return
 	}
+	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGINT)
+	defer cancel()
 	telnetClient := NewTelnetClient(address, timeout, os.Stdin, os.Stdout)
-	err := telnetClient.Connect()
-	if err != nil {
-		log.Fatalf("Could not connect to server %s\n%q", address, err)
+	if err := telnetClient.Connect(); err != nil {
+		log.Printf("Could not connect to server %s\n%q", address, err)
+		return
 	}
 	log.Printf("Connected to %s", address)
 
 	go func() {
-		err := telnetClient.Send()
-		if err == nil {
+		if err := telnetClient.Send(); err == nil {
 			log.Printf("...EOF")
 		} else {
 			log.Println("send error:", err)
@@ -46,11 +46,10 @@ func main() {
 		cancel()
 	}()
 	go func() {
-		err := telnetClient.Receive()
-		if err == nil {
+		if err := telnetClient.Receive(); err == nil {
 			log.Printf("...Connection was closed by peer")
 		} else {
-			log.Println("recieve error:", err)
+			log.Println("receive error:", err)
 		}
 		cancel()
 	}()
