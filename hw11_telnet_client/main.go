@@ -1,12 +1,12 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"log"
 	"net"
 	"os"
 	"os/signal"
-	"sync"
 	"syscall"
 	"time"
 )
@@ -16,11 +16,8 @@ const defaultTelnetPort = "23"
 func main() {
 	var timeout time.Duration
 	var address string
-	var wg sync.WaitGroup
-	stopCh := make(chan struct{}, 1)
-	exit := make(chan struct{}, 1)
-	sigCh := make(chan os.Signal, 1)
-	signal.Notify(sigCh, syscall.SIGINT)
+	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGINT)
+	defer cancel()
 	flag.DurationVar(&timeout, "timeout", 10*time.Second, "timeout of telnet operation")
 	flag.Parse()
 	args := flag.Args()
@@ -38,44 +35,25 @@ func main() {
 		log.Fatalf("Could not connect to server %s\n%q", address, err)
 	}
 	log.Printf("Connected to %s", address)
-	wg.Add(2)
-	go SendMessage(exit, &wg, telnetClient)
-	go ReceiveMessage(exit, &wg, telnetClient)
-	go func(wg *sync.WaitGroup) {
-		wg.Wait()
-		stopCh <- struct{}{}
-	}(&wg)
-	select {
-	case <-stopCh:
-	case <-sigCh:
-		close(exit)
-	}
-}
 
-func SendMessage(exit chan struct{}, wg *sync.WaitGroup, client TelnetClient) {
-	defer client.Close()
-	defer wg.Done()
-	select {
-	case <-exit:
-		return
-	default:
-		err := client.Send()
-		if err != nil {
-			return
+	go func() {
+		err := telnetClient.Send()
+		if err == nil {
+			log.Printf("...EOF")
+		} else {
+			log.Println("send error:", err)
 		}
-	}
-}
+		cancel()
+	}()
+	go func() {
+		err := telnetClient.Receive()
+		if err == nil {
+			log.Printf("...Connection was closed by peer")
+		} else {
+			log.Println("recieve error:", err)
+		}
+		cancel()
+	}()
 
-func ReceiveMessage(exit chan struct{}, wg *sync.WaitGroup, client TelnetClient) {
-	defer client.Close()
-	defer wg.Done()
-	select {
-	case <-exit:
-		return
-	default:
-		err := client.Receive()
-		if err != nil {
-			return
-		}
-	}
+	<-ctx.Done()
 }
