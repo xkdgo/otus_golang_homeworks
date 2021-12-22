@@ -175,8 +175,7 @@ func validateIn(method string, limit string, structFieldName string,
 		if err != nil {
 			return ErrInvalidValidator{fmt.Sprintf("for %s limit %s should be integer, %s", valueToCheck, limit, err.Error())}
 		}
-		_, ok := limitIntMap[int(valueToCheck.Int())]
-		if !ok {
+		if _, ok := limitIntMap[int(valueToCheck.Int())]; !ok {
 			return ValidationError{
 				Field: structFieldName,
 				Err:   valuerror.ErrValidateIn{TrueLimit: limit, ActualValue: fmt.Sprintf("%d", valueToCheck.Int())},
