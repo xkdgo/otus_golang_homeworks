@@ -2,11 +2,15 @@ package main
 
 import (
 	"context"
-	"flag"
+	"fmt"
+
+	// "flag"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
+
+	flag "github.com/spf13/pflag"
 
 	"github.com/xkdgo/otus_golang_homeworks/hw12_13_14_15_calendar/internal/app"
 	"github.com/xkdgo/otus_golang_homeworks/hw12_13_14_15_calendar/internal/logger"
@@ -17,7 +21,7 @@ import (
 var configFile string
 
 func init() {
-	flag.StringVar(&configFile, "config", "/etc/calendar/config.toml", "Path to configuration file")
+	flag.StringVarP(&configFile, "config", "c", "/etc/calendar/config.toml", "Path to configuration file")
 }
 
 func main() {
@@ -27,7 +31,7 @@ func main() {
 		printVersion()
 		return
 	}
-
+	exitCh := make(chan struct{})
 	config := NewConfig()
 	logg := logger.New(config.Logger.Level)
 
@@ -37,11 +41,13 @@ func main() {
 	server := internalhttp.NewServer(logg, calendar)
 
 	ctx, cancel := signal.NotifyContext(context.Background(),
-		syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP)
+		os.Interrupt, syscall.SIGTERM, syscall.SIGHUP)
 	defer cancel()
 
 	go func() {
+		fmt.Println("goroutine started")
 		<-ctx.Done()
+		fmt.Println("context Done")
 
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second*3)
 		defer cancel()
@@ -49,6 +55,7 @@ func main() {
 		if err := server.Stop(ctx); err != nil {
 			logg.Error("failed to stop http server: " + err.Error())
 		}
+		close(exitCh)
 	}()
 
 	logg.Info("calendar is running...")
@@ -58,4 +65,6 @@ func main() {
 		cancel()
 		os.Exit(1) //nolint:gocritic
 	}
+	<-exitCh
+
 }
