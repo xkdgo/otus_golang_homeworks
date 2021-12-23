@@ -2,6 +2,7 @@ package internalhttp
 
 import (
 	"context"
+	"fmt"
 )
 
 type Server struct { // TODO
@@ -24,6 +25,9 @@ func (s *Server) Start(ctx context.Context) error {
 }
 
 func (s *Server) Stop(ctx context.Context) error {
+	fmt.Println("started StopFunc")
+	<-ctx.Done()
+	fmt.Println("ctx done ended StopFunc")
 	// TODO
 	return nil
 }
