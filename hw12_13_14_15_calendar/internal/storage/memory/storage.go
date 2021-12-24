@@ -9,7 +9,6 @@ import (
 )
 
 type Storage struct {
-	// TODO
 	mu     sync.RWMutex
 	nextID int
 	data   map[int]*storage.Event
@@ -26,8 +25,15 @@ func (s *Storage) CreateEvent(ev storage.Event) (id string, err error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	if ev.ID == "" {
-		ev.ID = strconv.Itoa(s.nextID)
-		s.nextID++
+		for {
+			if _, ok := s.data[s.nextID]; !ok {
+				ev.ID = strconv.Itoa(s.nextID)
+				s.nextID++
+				break
+			} else {
+				s.nextID++
+			}
+		}
 	}
 	idInt, err := strconv.Atoi(ev.ID)
 	if err != nil {
