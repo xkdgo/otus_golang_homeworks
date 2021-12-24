@@ -6,21 +6,24 @@ import (
 	"github.com/spf13/viper"
 )
 
-// var ErrFailToReadConfig = errors.New("failed to read config")
+var defaultServerPort = "8080"
 
 type Config struct {
 	Logger LoggerConf `mapstructure:"logger"`
-	// TODO
+	Server ServerConf `mapstructure:"server"`
 }
 
 type LoggerConf struct {
-	Level     string `mapstructure:"level"`
-	SomeParam string `mapstructure:"someparam"`
-	// TODO
+	Level string `mapstructure:"level"`
+}
+
+type ServerConf struct {
+	Host string `mapstructure:"host"`
+	Port string `mapstructure:"port"`
 }
 
 func NewConfig(cfgFile string) (Config, error) {
-	viper.SetDefault("logger.someparam", "defaultString")
+	viper.SetDefault("server.port", defaultServerPort)
 	var config Config
 	viper.SetConfigFile(cfgFile)
 	if err := viper.ReadInConfig(); err != nil {
@@ -31,8 +34,6 @@ func NewConfig(cfgFile string) (Config, error) {
 		return Config{}, fmt.Errorf("unable to decode into struct, %w", err)
 	}
 	fmt.Printf("%+v\n", config)
-	test := viper.GetString("logger.someparam")
-	fmt.Println(test)
 	fmt.Println(viper.AllSettings())
 	return config, nil
 }
