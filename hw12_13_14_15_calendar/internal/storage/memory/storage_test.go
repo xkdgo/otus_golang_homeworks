@@ -108,13 +108,14 @@ func TestStorageConcurency(t *testing.T) { //nolint:gocognit
 				updateCounter++
 			}
 		}
+		close(updateChan)
+		wg.Wait()
 		for index, ev := range testDataSlice {
 			if index%divider == 0 {
 				require.Equal(t, "updated title", memstorage.data[ev.ID].Title)
 			}
 		}
-		close(updateChan)
-		wg.Wait()
+
 		// delete all updated.
 		for i := 0; i < updateCounter; i++ {
 			wg.Add(1)

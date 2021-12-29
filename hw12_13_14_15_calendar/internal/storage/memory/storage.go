@@ -8,8 +8,6 @@ import (
 	"github.com/xkdgo/otus_golang_homeworks/hw12_13_14_15_calendar/internal/storage/utilstorage"
 )
 
-const layout = "2006-01-02"
-
 type schedule map[time.Time]*storage.Event
 
 type Storage struct {
@@ -81,57 +79,62 @@ func (s *Storage) DeleteEvent(id string) error {
 	return nil
 }
 
-func (s *Storage) GetEventsOnDay(userID string, startDate string) (events []*storage.Event, err error) {
-	return s.GetEventsByDuration(userID, startDate, 24*time.Hour)
+func (s *Storage) GetEventsOnDay(userID string, dateTime time.Time) (events []storage.Event, err error) {
+	return s.GetEventsByDuration(userID, dateTime, 24*time.Hour)
 }
 
-func (s *Storage) GetEventsOnCurrentWeek(userID string, startDate string) (events []*storage.Event, err error) {
-	dateTime, err := time.Parse(layout, startDate)
-	if err != nil {
-		return nil, err
+func (s *Storage) GetEventsOnCurrentWeek(userID string, dateTime time.Time) (events []storage.Event, err error) {
+	weekDayNum := dateTime.Weekday()
+	var startOfGivenWeek time.Time
+	switch weekDayNum {
+	case time.Sunday:
+		startOfGivenWeek = dateTime.AddDate(0, 0, -6)
+	case time.Monday:
+		startOfGivenWeek = dateTime
+	case time.Tuesday:
+		startOfGivenWeek = dateTime.AddDate(0, 0, -1)
+	case time.Wednesday:
+		startOfGivenWeek = dateTime.AddDate(0, 0, -2)
+	case time.Thursday:
+		startOfGivenWeek = dateTime.AddDate(0, 0, -3)
+	case time.Friday:
+		startOfGivenWeek = dateTime.AddDate(0, 0, -4)
+	case time.Saturday:
+		startOfGivenWeek = dateTime.AddDate(0, 0, -5)
 	}
-	year, weekNumber := dateTime.ISOWeek()
-	startYear := time.Date(year, 1, 1, 0, 0, 0, 0, dateTime.Location())
-	startOfGivenWeek := startYear.AddDate(0, 0, (weekNumber-1)*7)
 	endOfGivenWeek := startOfGivenWeek.AddDate(0, 0, 7)
 	durationOfCurrentWeek := endOfGivenWeek.Sub(dateTime)
-	return s.GetEventsByDuration(userID, startDate, durationOfCurrentWeek)
+	return s.GetEventsByDuration(userID, dateTime, durationOfCurrentWeek)
 }
 
-func (s *Storage) GetEventsOnCurrentMonth(userID string, startDate string) (events []*storage.Event, err error) {
-	dateTime, err := time.Parse(layout, startDate)
-	if err != nil {
-		return nil, err
-	}
+func (s *Storage) GetEventsOnCurrentMonth(userID string, dateTime time.Time) (events []storage.Event, err error) {
 	year := dateTime.Year()
 	month := dateTime.Month()
 	startMonth := time.Date(year, month, 1, 0, 0, 0, 0, dateTime.Location())
-	endOfGivenMonth := startMonth.AddDate(0, 1, -1)
+	endOfGivenMonth := startMonth.AddDate(0, 1, 0)
 	durationOfCurrentMonth := endOfGivenMonth.Sub(dateTime)
-	return s.GetEventsByDuration(userID, startDate, durationOfCurrentMonth)
+	return s.GetEventsByDuration(userID, dateTime, durationOfCurrentMonth)
 }
 
 func (s *Storage) GetEventsByDuration(
 	userID string,
-	startDate string,
+	dateTime time.Time,
 	duration time.Duration,
-) (events []*storage.Event, err error) {
+) (events []storage.Event, err error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	userScheduleMap, ok := s.userSchedule[userID]
 	if !ok {
 		return nil, storage.ErrUnkownUserID
 	}
-	dateTime, err := time.Parse(layout, startDate)
-	if err != nil {
-		return nil, err
-	}
+
 	dateTimeLater := dateTime.Add(duration)
 	for currentDate, ev := range userScheduleMap {
 		if currentDate.Before(dateTime) || currentDate.After(dateTimeLater) {
 			continue
 		} else {
-			events = append(events, ev)
+			evCopy := *ev
+			events = append(events, evCopy)
 		}
 	}
 	return events, nil
