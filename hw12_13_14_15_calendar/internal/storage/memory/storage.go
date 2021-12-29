@@ -79,11 +79,11 @@ func (s *Storage) DeleteEvent(id string) error {
 	return nil
 }
 
-func (s *Storage) GetEventsOnDay(userID string, dateTime time.Time) (events []storage.Event, err error) {
-	return s.GetEventsByDuration(userID, dateTime, 24*time.Hour)
+func (s *Storage) ListEventsOnDay(userID string, dateTime time.Time) (events []storage.Event, err error) {
+	return s.ListEventsByDuration(userID, dateTime, 24*time.Hour)
 }
 
-func (s *Storage) GetEventsOnCurrentWeek(userID string, dateTime time.Time) (events []storage.Event, err error) {
+func (s *Storage) ListEventsOnCurrentWeek(userID string, dateTime time.Time) (events []storage.Event, err error) {
 	weekDayNum := dateTime.Weekday()
 	var startOfGivenWeek time.Time
 	switch weekDayNum {
@@ -104,19 +104,19 @@ func (s *Storage) GetEventsOnCurrentWeek(userID string, dateTime time.Time) (eve
 	}
 	endOfGivenWeek := startOfGivenWeek.AddDate(0, 0, 7)
 	durationOfCurrentWeek := endOfGivenWeek.Sub(dateTime)
-	return s.GetEventsByDuration(userID, dateTime, durationOfCurrentWeek)
+	return s.ListEventsByDuration(userID, dateTime, durationOfCurrentWeek)
 }
 
-func (s *Storage) GetEventsOnCurrentMonth(userID string, dateTime time.Time) (events []storage.Event, err error) {
+func (s *Storage) ListEventsOnCurrentMonth(userID string, dateTime time.Time) (events []storage.Event, err error) {
 	year := dateTime.Year()
 	month := dateTime.Month()
 	startMonth := time.Date(year, month, 1, 0, 0, 0, 0, dateTime.Location())
 	endOfGivenMonth := startMonth.AddDate(0, 1, 0)
 	durationOfCurrentMonth := endOfGivenMonth.Sub(dateTime)
-	return s.GetEventsByDuration(userID, dateTime, durationOfCurrentMonth)
+	return s.ListEventsByDuration(userID, dateTime, durationOfCurrentMonth)
 }
 
-func (s *Storage) GetEventsByDuration(
+func (s *Storage) ListEventsByDuration(
 	userID string,
 	dateTime time.Time,
 	duration time.Duration,

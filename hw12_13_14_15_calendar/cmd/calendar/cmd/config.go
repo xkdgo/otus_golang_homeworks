@@ -6,11 +6,15 @@ import (
 	"github.com/spf13/viper"
 )
 
-var defaultServerPort = "8080"
+var (
+	defaultServerPort  = "8080"
+	defaultStorageType = "in-memory"
+)
 
 type Config struct {
-	Logger LoggerConf `mapstructure:"logger"`
-	Server ServerConf `mapstructure:"server"`
+	Logger  LoggerConf  `mapstructure:"logger"`
+	Server  ServerConf  `mapstructure:"server"`
+	Storage StorageConf `mapstructure:"db"`
 }
 
 type LoggerConf struct {
@@ -22,8 +26,14 @@ type ServerConf struct {
 	Port string `mapstructure:"port"`
 }
 
+type StorageConf struct {
+	Type string `mapstructure:"type"`
+	DSN  string `mapstructure:"dsn"`
+}
+
 func NewConfig(cfgFile string) (Config, error) {
 	viper.SetDefault("server.port", defaultServerPort)
+	viper.SetDefault("db.type", defaultStorageType)
 	var config Config
 	viper.SetConfigFile(cfgFile)
 	if err := viper.ReadInConfig(); err != nil {
