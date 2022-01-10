@@ -1,10 +1,14 @@
 package cmd
 
 import (
+	"database/sql"
 	"fmt"
 
+	_ "github.com/jackc/pgx/stdlib"
+	"github.com/pressly/goose/v3"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	_ "github.com/xkdgo/otus_golang_homeworks/hw12_13_14_15_calendar/migrations"
 )
 
 var (
@@ -33,6 +37,20 @@ func Migrate(cmd *cobra.Command, args []string) error {
 	if len(args) == 0 {
 		return fmt.Errorf("need one more argument <up|down>")
 	}
+
+	db, err := sql.Open("pgx", config.Storage.DSN)
+	if err != nil {
+		return err
+	}
+	// ctx, cancel := context.WithTimeout(context.Background(), time.Second*1)
+	// defer cancel()
+	// err = db.PingContext(ctx)
+	// if err != nil {
+	// 	return err
+	// }
 	fmt.Println(args[0])
+	if err = goose.Run(args[0], db, "./"); err != nil {
+		return err
+	}
 	return nil
 }
