@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	_ "github.com/jackc/pgx/stdlib"
+	"github.com/pkg/errors"
 	"github.com/pressly/goose/v3"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -33,16 +34,16 @@ func Migrate(cmd *cobra.Command, args []string) error {
 		return err
 	}
 	if len(args) == 0 {
-		return fmt.Errorf("need one more argument <up|down>")
+		return fmt.Errorf("need one more argument <up|down|status>")
 	}
 
 	db, err := sql.Open("pgx", config.Storage.DSN)
 	if err != nil {
-		return err
+		return errors.Wrapf(err, ":migration load driver error")
 	}
 
 	if err = goose.Run(args[0], db, "./"); err != nil {
-		return err
+		return errors.Wrapf(err, ":goose migration error with arg %s", args[0])
 	}
 	return nil
 }
