@@ -32,8 +32,6 @@ func Migrate(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
-	fmt.Println(CfgFile)
-	_ = config
 	if len(args) == 0 {
 		return fmt.Errorf("need one more argument <up|down>")
 	}
@@ -42,13 +40,7 @@ func Migrate(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
-	// ctx, cancel := context.WithTimeout(context.Background(), time.Second*1)
-	// defer cancel()
-	// err = db.PingContext(ctx)
-	// if err != nil {
-	// 	return err
-	// }
-	fmt.Println(args[0])
+
 	if err = goose.Run(args[0], db, "./"); err != nil {
 		return err
 	}

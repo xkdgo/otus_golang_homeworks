@@ -4,4 +4,4 @@ server:
   port: 8080
 db:
   type: sql
-  dsn: "postgres://xkdgo:xkdgo@0.0.0.0:5432/calendar?sslmode=disable"
+  dsn: "postgres://hwuser:hwpasswd@0.0.0.0:5432/calendar?sslmode=disable"
