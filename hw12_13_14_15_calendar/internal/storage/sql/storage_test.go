@@ -3,9 +3,8 @@ package sqlstorage
 import (
 	"context"
 	"os"
-	"testing"
-
 	"sync"
+	"testing"
 
 	"github.com/bxcodec/faker/v3"
 	"github.com/stretchr/testify/require"
@@ -64,12 +63,14 @@ func TestStorageConcurency(t *testing.T) { //nolint:gocognit
 		rows, err := sqlst.db.Query(`SELECT COUNT(*) AS usercount
 		FROM public.events`)
 		require.NoError(t, err)
+		defer rows.Close()
+		err = rows.Err()
+		require.NoError(t, err)
 
 		for rows.Next() {
 			err := rows.Scan(&datacount)
 			require.NoError(t, err)
 		}
-		rows.Close()
 		require.Equal(t, testDataLen, int(datacount))
 		for i := 0; i < workersCount; i++ {
 			wg.Add(1)
@@ -96,9 +97,7 @@ func TestStorageConcurency(t *testing.T) { //nolint:gocognit
 			if index%divider == 0 {
 				query := "select title from public.events where id = $1"
 				row := sqlst.db.QueryRow(query, ev.ID)
-				var (
-					title string
-				)
+				var title string
 				err := row.Scan(&title)
 				require.NoError(t, err)
 				require.Equal(t, "updated title", title)
@@ -126,12 +125,15 @@ func TestStorageConcurency(t *testing.T) { //nolint:gocognit
 		rows, err = sqlst.db.Query(`SELECT COUNT(*) AS usercount
 		FROM public.events`)
 		require.NoError(t, err)
+		defer rows.Close()
+		err = rows.Err()
+		require.NoError(t, err)
 
 		for rows.Next() {
 			err := rows.Scan(&datacount)
 			require.NoError(t, err)
 		}
-		rows.Close()
+
 		require.Equal(t, testDataLen-updateCounter, int(datacount))
 	})
 }

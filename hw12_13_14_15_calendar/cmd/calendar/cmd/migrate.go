@@ -4,22 +4,22 @@ import (
 	"database/sql"
 	"fmt"
 
-	_ "github.com/jackc/pgx/stdlib"
+	_ "github.com/jackc/pgx/stdlib" //nolint
 	"github.com/pkg/errors"
 	"github.com/pressly/goose/v3"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+
+	// init migrations when run migrate command only here.
 	_ "github.com/xkdgo/otus_golang_homeworks/hw12_13_14_15_calendar/migrations"
 )
 
-var (
-	migrateCmd = &cobra.Command{
-		Use:   "migrate",
-		Short: "migrate cmd is used for database migration",
-		Long:  `migrate cmd is used for database migration: migrate <up | down>`,
-		RunE:  Migrate,
-	}
-)
+var migrateCmd = &cobra.Command{
+	Use:   "migrate",
+	Short: "migrate cmd is used for database migration",
+	Long:  `migrate cmd is used for database migration: migrate <up | down>`,
+	RunE:  Migrate,
+}
 
 func init() {
 	migrateCmd.Flags().StringVarP(&CfgFile, "config", "c", "/etc/calendar/config.toml", "Path to configuration file")

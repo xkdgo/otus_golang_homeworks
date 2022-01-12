@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	_ "github.com/jackc/pgx/stdlib"
+	_ "github.com/jackc/pgx/stdlib" //nolint
 	"github.com/jmoiron/sqlx"
 	"github.com/pkg/errors"
 	"github.com/xkdgo/otus_golang_homeworks/hw12_13_14_15_calendar/internal/storage"
@@ -34,9 +34,8 @@ func (s *Storage) Connect(ctx context.Context, dsn string) error {
 }
 
 func (s *Storage) Close() error {
-	err := s.db.Close()
-	if err != nil {
-		return err
+	if err := s.db.Close(); err != nil {
+		return errors.Wrap(err, ":sql storage close error")
 	}
 	return nil
 }
@@ -52,7 +51,7 @@ func (s *Storage) CreateEvent(ev storage.Event) (id string, err error) {
 		id, title, userid, datetimestart, tilldate, alarmdatetime
 	) 
 	VALUES ($1, $2, $3, $4, $5, $6)`,
-		dbConvertedEvent.Id,
+		dbConvertedEvent.ID,
 		dbConvertedEvent.Title,
 		dbConvertedEvent.Userid,
 		dbConvertedEvent.Datetimestart,
@@ -196,7 +195,7 @@ func (s *Storage) ListEventsByDuration(
 		}
 		events = append(events,
 			convertToStorageEvent(pgEvent{
-				Id:            id,
+				ID:            id,
 				Title:         title,
 				Userid:        userid,
 				Datetimestart: datetimestart,
@@ -241,7 +240,7 @@ func convertToDBEvent(ev storage.Event) (pgEvent, error) {
 	if ev.ID == "" {
 		ev.ID = utilstorage.GenerateUUID()
 	}
-	dbEvent.Id = ev.ID
+	dbEvent.ID = ev.ID
 	if ev.UserID == "" {
 		return pgEvent{}, storage.ErrEmptyUserIDField
 	}
@@ -255,7 +254,7 @@ func convertToDBEvent(ev storage.Event) (pgEvent, error) {
 
 func convertToStorageEvent(pgEv pgEvent) storage.Event {
 	storageEvent := storage.Event{}
-	storageEvent.ID = pgEv.Id
+	storageEvent.ID = pgEv.ID
 
 	storageEvent.Title = pgEv.Title
 	storageEvent.UserID = pgEv.Userid
@@ -266,7 +265,7 @@ func convertToStorageEvent(pgEv pgEvent) storage.Event {
 }
 
 type pgEvent struct {
-	Id            string    `db:"id"`
+	ID            string    `db:"id"`
 	Title         string    `db:"title"`
 	Userid        string    `db:"userid"`
 	Datetimestart time.Time `db:"datetimestart"`

@@ -42,7 +42,7 @@ func TestStorageGetEvents(t *testing.T) {
 			require.NoError(t, err)
 			testdata.ID = utilstorage.GenerateUUID()
 			testdata.UserID = userIDFirst
-			testdata.Duration = testdata.Duration * time.Hour
+			testdata.Duration *= time.Hour
 
 			testdata.DateTimeStart, err = time.Parse(timelayoutWithMin, fmt.Sprintf("%02d Jan 22 12:15 +0500", i))
 			require.NoError(t, err)
