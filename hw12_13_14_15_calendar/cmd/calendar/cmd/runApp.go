@@ -29,6 +29,7 @@ func RunApp(config Config) {
 		logg.Error("cant init storage:", errors.Wrapf(err, "%s", config.Storage.Type))
 		cancel()
 	}
+	defer storage.Close()
 	calendar := app.New(logg, storage)
 
 	server := internalhttp.NewServer(net.JoinHostPort(config.Server.Host, config.Server.Port), logg, calendar)

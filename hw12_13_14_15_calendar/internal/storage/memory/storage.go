@@ -28,6 +28,10 @@ func (s *Storage) ResetAllData() {
 	s.userSchedule = make(map[string]schedule)
 }
 
+func (s *Storage) Close() error {
+	return nil
+}
+
 func (s *Storage) CreateEvent(ev storage.Event) (id string, err error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
