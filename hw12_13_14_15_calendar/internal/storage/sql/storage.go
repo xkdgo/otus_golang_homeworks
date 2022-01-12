@@ -52,12 +52,12 @@ func (s *Storage) CreateEvent(ev storage.Event) (id string, err error) {
 		id, title, userid, datetimestart, tilldate, alarmdatetime
 	) 
 	VALUES ($1, $2, $3, $4, $5, $6)`,
-		dbConvertedEvent.id,
-		dbConvertedEvent.title,
-		dbConvertedEvent.userid,
-		dbConvertedEvent.datetimestart,
-		dbConvertedEvent.tilldate,
-		dbConvertedEvent.alarmdatetime,
+		dbConvertedEvent.Id,
+		dbConvertedEvent.Title,
+		dbConvertedEvent.Userid,
+		dbConvertedEvent.Datetimestart,
+		dbConvertedEvent.Tilldate,
+		dbConvertedEvent.Alarmdatetime,
 	)
 	if err != nil {
 		fmt.Println(err)
@@ -91,13 +91,13 @@ func (s *Storage) UpdateEvent(id string, event storage.Event) error {
 		return err
 	}
 	_, err = s.db.NamedExec(`UPDATE public.events SET 
-	(
+	
 		title=:title,
 		userid=:userid,
 		datetimestart=:datetimestart, 
 		tilldate=:tilldate,
 		alarmdatetime=:alarmdatetime
-	)
+	
 	 WHERE id = :id`,
 		&dbConvertedEvent)
 	if err != nil {
@@ -107,7 +107,15 @@ func (s *Storage) UpdateEvent(id string, event storage.Event) error {
 }
 
 func (s *Storage) DeleteEvent(id string) error {
-	_, err := s.db.Exec(`DELETE FROM public.events WHERE id = $1`, id)
+	_, err := s.db.Exec(`DELETE FROM public.events WHERE id =$1`, id)
+	if err != nil {
+		return errors.Wrap(err, ":delete event error")
+	}
+	return nil
+}
+
+func (s *Storage) ResetAllData() error {
+	_, err := s.db.Exec(`DELETE FROM public.events`)
 	if err != nil {
 		return err
 	}
@@ -156,10 +164,8 @@ func (s *Storage) ListEventsByDuration(
 	dateTime time.Time,
 	duration time.Duration,
 ) (events []storage.Event, err error) {
-	rows, err := s.db.Query(`SELECT 
-	(
+	rows, err := s.db.Query(`SELECT	
 	id, title, userid, datetimestart, tilldate, alarmdatetime
-	)
 	FROM public.events 
 	WHERE 
 	(
@@ -185,24 +191,49 @@ func (s *Storage) ListEventsByDuration(
 			&id, &title, &userid,
 			&datetimestart, &tilldate, &alarmdatetime); err != nil {
 			if err != nil {
-				return nil, err
+				return nil, errors.Wrap(err, ": rows next error listeventsbyduration")
 			}
 		}
 		events = append(events,
 			convertToStorageEvent(pgEvent{
-				id:            id,
-				title:         title,
-				userid:        userid,
-				datetimestart: datetimestart,
-				tilldate:      tilldate,
-				alarmdatetime: alarmdatetime,
+				Id:            id,
+				Title:         title,
+				Userid:        userid,
+				Datetimestart: datetimestart,
+				Tilldate:      tilldate,
+				Alarmdatetime: alarmdatetime,
 			}))
-		fmt.Printf("%s %s\n", id, title)
 	}
 	if err := rows.Err(); err != nil {
 		return nil, errors.Wrap(err, ": rows read error listeventsbyduration")
 	}
+	if len(events) == 0 {
+		err = s.checkUserIDisPresent(userID)
+		if err != nil {
+			return nil, err
+		}
+	}
 	return events, nil
+}
+
+func (s *Storage) checkUserIDisPresent(userID string) error {
+	rows, err := s.db.Query(`SELECT COUNT(*) AS usercount
+                             FROM public.events
+                             WHERE userid = $1`, userID)
+	if err != nil {
+		return errors.Wrap(err, ": while query userid count")
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var usercount int64
+		if err := rows.Scan(&usercount); err != nil {
+			return errors.Wrap(err, ": while query usercount")
+		}
+		if usercount == 0 {
+			return storage.ErrUnkownUserID
+		}
+	}
+	return nil
 }
 
 func convertToDBEvent(ev storage.Event) (pgEvent, error) {
@@ -210,35 +241,35 @@ func convertToDBEvent(ev storage.Event) (pgEvent, error) {
 	if ev.ID == "" {
 		ev.ID = utilstorage.GenerateUUID()
 	}
-	dbEvent.id = ev.ID
+	dbEvent.Id = ev.ID
 	if ev.UserID == "" {
 		return pgEvent{}, storage.ErrEmptyUserIDField
 	}
-	dbEvent.title = ev.Title
-	dbEvent.userid = ev.UserID
-	dbEvent.datetimestart = ev.DateTimeStart
-	dbEvent.tilldate = ev.DateTimeStart.Add(ev.Duration)
-	dbEvent.alarmdatetime = ev.DateTimeStart.Add(-1 * ev.Duration)
+	dbEvent.Title = ev.Title
+	dbEvent.Userid = ev.UserID
+	dbEvent.Datetimestart = ev.DateTimeStart
+	dbEvent.Tilldate = ev.DateTimeStart.Add(ev.Duration)
+	dbEvent.Alarmdatetime = ev.DateTimeStart.Add(-1 * ev.Duration)
 	return dbEvent, nil
 }
 
 func convertToStorageEvent(pgEv pgEvent) storage.Event {
 	storageEvent := storage.Event{}
-	storageEvent.ID = pgEv.id
+	storageEvent.ID = pgEv.Id
 
-	storageEvent.Title = pgEv.title
-	storageEvent.UserID = pgEv.userid
-	storageEvent.DateTimeStart = pgEv.datetimestart
-	storageEvent.Duration = pgEv.tilldate.Sub(pgEv.datetimestart)
-	storageEvent.AlarmTime = pgEv.datetimestart.Sub(pgEv.alarmdatetime)
+	storageEvent.Title = pgEv.Title
+	storageEvent.UserID = pgEv.Userid
+	storageEvent.DateTimeStart = pgEv.Datetimestart
+	storageEvent.Duration = pgEv.Tilldate.Sub(pgEv.Datetimestart)
+	storageEvent.AlarmTime = pgEv.Datetimestart.Sub(pgEv.Alarmdatetime)
 	return storageEvent
 }
 
 type pgEvent struct {
-	id            string
-	title         string
-	userid        string
-	datetimestart time.Time
-	tilldate      time.Time
-	alarmdatetime time.Time
+	Id            string    `db:"id"`
+	Title         string    `db:"title"`
+	Userid        string    `db:"userid"`
+	Datetimestart time.Time `db:"datetimestart"`
+	Tilldate      time.Time `db:"tilldate"`
+	Alarmdatetime time.Time `db:"alarmdatetime"`
 }
