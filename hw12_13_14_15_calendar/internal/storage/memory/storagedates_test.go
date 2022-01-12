@@ -38,7 +38,7 @@ func TestStorageGetEvents(t *testing.T) {
 		require.Equal(t, daysInJan, len(memst.data))
 		require.Equal(t, 1, len(memst.userSchedule))
 
-		for i := 1; i <= 28; i++ {
+		for i := 1; i <= daysInFeb; i++ {
 			err := faker.FakeData(&testdata)
 			require.NoError(t, err)
 			testdata.UserID = "2"
@@ -77,5 +77,6 @@ func TestStorageGetEvents(t *testing.T) {
 		require.Equal(t, 27, len(scheduledEventsForUser))
 		_, err = memst.ListEventsOnCurrentMonth("3", testTime)
 		require.Error(t, err)
+		require.Equal(t, "unknown user", err.Error())
 	})
 }
