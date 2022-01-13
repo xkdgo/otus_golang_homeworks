@@ -45,6 +45,12 @@ func (s *Storage) CreateEvent(ev storage.Event) (id string, err error) {
 	if err != nil {
 		return "", err
 	}
+	if ev.ID == "" {
+		ev.ID = utilstorage.GenerateUUID()
+	}
+	if ev.UserID == "" {
+		return "", storage.ErrEmptyUserIDField
+	}
 	tx := s.db.MustBegin()
 	result, err := tx.Exec(`INSERT INTO public.events 
 	(
