@@ -1,5 +1,6 @@
 [logger]
-level = "INFO"
+level = "DEBUG"
 
-# TODO
-# ...
+[server]
+host = ""
+port = "8080"
