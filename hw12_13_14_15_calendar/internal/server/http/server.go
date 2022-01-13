@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"time"
 )
 
 type Server struct { // TODO
@@ -18,30 +19,33 @@ type Logger interface { // TODO
 	Log(msg ...interface{})
 	Info(msg ...interface{})
 	Infof(format string, msg ...interface{})
+	Error(msg ...interface{})
 }
 
-type Application interface { // TODO
+type Application interface {
+	CreateEvent(ctx context.Context,
+		id, title, userID string,
+		DateTimeStart time.Time,
+		Duration, AlarmTime time.Duration) (createdID string, err error)
+	DeleteEvent(ctx context.Context, id string) error
 }
 
 func NewServer(addr string, logger Logger, app Application) *Server {
-	s := &Server{}
-	s.logger = logger
-	s.app = app
-	s.addr = addr
-	return s
-}
-
-func HelloServer(w http.ResponseWriter, r *http.Request) {
-	w.WriteHeader(http.StatusOK)
-	fmt.Fprintf(w, "Hello, World")
+	return &Server{
+		logger: logger,
+		app:    app,
+		addr:   addr,
+	}
 }
 
 func (s *Server) Start(ctx context.Context) error {
-	mux := http.NewServeMux()
-	mux.Handle("/", s.loggingMiddleware(http.HandlerFunc(HelloServer)))
+	// mux := http.NewServeMux()
+	handler := NewHandler(s.app, s.logger, http.NewServeMux())
+	// mux.Handle("/", s.loggingMiddleware(http.HandlerFunc(HelloServer)))
+	// mux.Handle("/create", s.loggingMiddleware(http.HandlerFunc(handler.CreateEvent)))
 	s.router = &http.Server{
 		Addr:    s.addr,
-		Handler: mux,
+		Handler: s.loggingMiddleware(handler),
 	}
 
 	s.logger.Infof("server started on port %s", s.router.Addr)
