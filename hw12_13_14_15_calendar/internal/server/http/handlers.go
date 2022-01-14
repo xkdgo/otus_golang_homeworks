@@ -4,21 +4,53 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"path"
+	"strings"
 	"time"
 
 	"github.com/pkg/errors"
 )
 
 type AppHandler struct {
-	app    Application
-	logger Logger
-	mux    *http.ServeMux
+	app             Application
+	logger          Logger
+	calendarHandler *CalendarHandler
+	// mux    *http.ServeMux
 }
 
-func NewHandler(app Application, logger Logger, mux *http.ServeMux) *AppHandler {
-	h := &AppHandler{app: app, logger: logger, mux: mux}
-	mux.Handle("/", http.HandlerFunc(HelloServer))
-	mux.Handle("/calendar/event", http.HandlerFunc(h.CRUDEvent))
+type CalendarHandler struct {
+	app Application
+}
+
+func NewCalendarHandler(app Application) *CalendarHandler {
+	return &CalendarHandler{
+		app: app,
+	}
+}
+
+func (h *CalendarHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	var head string
+	head, r.URL.Path = ShiftPath(r.URL.Path)
+	fmt.Println(head == "", r.URL.Path)
+	switch {
+	case head == "" && r.URL.Path == "/":
+		h.HelloCalendar(w, r)
+	default:
+		http.Error(w, "Not Found", http.StatusNotFound)
+	}
+}
+
+func (h *CalendarHandler) HelloCalendar(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusOK)
+	fmt.Fprintf(w, "Hello, Calendar")
+}
+
+func NewRootHandler(app Application, logger Logger, mux *http.ServeMux) *AppHandler {
+	h := &AppHandler{
+		app:             app,
+		logger:          logger,
+		calendarHandler: NewCalendarHandler(app),
+	}
 	return h
 }
 
@@ -28,7 +60,34 @@ func HelloServer(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *AppHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	h.mux.ServeHTTP(w, r)
+	var head string
+	head, r.URL.Path = ShiftPath(r.URL.Path)
+	fmt.Println(head == "", r.URL.Path)
+	switch {
+	case head == "" && r.URL.Path == "/":
+		HelloServer(w, r)
+	case head == "api":
+		h.handleAPI(w, r)
+	default:
+		http.Error(w, "Not Found", http.StatusNotFound)
+	}
+}
+
+func (h *AppHandler) handleAPI(w http.ResponseWriter, r *http.Request) {
+	var head string
+	head, r.URL.Path = ShiftPath(r.URL.Path)
+	fmt.Println(head == "", r.URL.Path)
+	if head != "v1" {
+		http.NotFound(w, r)
+		return
+	}
+	head, r.URL.Path = ShiftPath(r.URL.Path)
+	switch head {
+	case "calendar":
+		h.calendarHandler.ServeHTTP(w, r)
+	default:
+		http.NotFound(w, r)
+	}
 }
 
 func (h *AppHandler) CRUDEvent(w http.ResponseWriter, r *http.Request) {
@@ -76,4 +135,16 @@ func (h *AppHandler) CRUDEvent(w http.ResponseWriter, r *http.Request) {
 type TestResponse struct {
 	Status  int    `json:"status"`
 	Message string `json:"messsage"`
+}
+
+// ShiftPath splits off the first component of p, which will be cleaned of
+// relative components before processing. head will never contain a slash and
+// tail will always be a rooted path without trailing slash.
+func ShiftPath(p string) (head, tail string) {
+	p = path.Clean("/" + p)
+	i := strings.Index(p[1:], "/") + 1
+	if i <= 0 {
+		return p[1:], "/"
+	}
+	return p[1:i], p[i:]
 }

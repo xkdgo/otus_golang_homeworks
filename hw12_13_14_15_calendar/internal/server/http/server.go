@@ -40,7 +40,7 @@ func NewServer(addr string, logger Logger, app Application) *Server {
 
 func (s *Server) Start(ctx context.Context) error {
 	// mux := http.NewServeMux()
-	handler := NewHandler(s.app, s.logger, http.NewServeMux())
+	handler := NewRootHandler(s.app, s.logger, http.NewServeMux())
 	// mux.Handle("/", s.loggingMiddleware(http.HandlerFunc(HelloServer)))
 	// mux.Handle("/create", s.loggingMiddleware(http.HandlerFunc(handler.CreateEvent)))
 	s.router = &http.Server{
