@@ -44,6 +44,7 @@ func (s *Server) loggingMiddleware(next http.Handler) http.Handler {
 				)
 			}
 		}()
+		reqpath := r.URL.EscapedPath()
 		start := time.Now()
 		wrapped := wrapResponseWriter(w)
 		next.ServeHTTP(wrapped, r)
@@ -51,7 +52,7 @@ func (s *Server) loggingMiddleware(next http.Handler) http.Handler {
 			r.RemoteAddr,
 			start.Format("[02/Jan/2006:15:04:05 -0700]"),
 			r.Method,
-			r.URL.EscapedPath(),
+			reqpath,
 			r.Proto,
 			wrapped.Status(),
 			time.Since(start),
