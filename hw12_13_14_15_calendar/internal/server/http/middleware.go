@@ -1,9 +1,15 @@
 package internalhttp
 
 import (
+	"context"
 	"net/http"
 	"runtime/debug"
 	"time"
+)
+
+const (
+	fakeUserID1 = "e5446547-ab14-482f-ab72-791079690665"
+	fakeUserID2 = "933327d2-3b0b-4688-befd-56da81456859"
 )
 
 // responseWriter is a minimal wrapper for http.ResponseWriter that allows the
@@ -26,7 +32,6 @@ func (rw *responseWriter) WriteHeader(code int) {
 	if rw.wroteHeader {
 		return
 	}
-
 	rw.status = code
 	rw.ResponseWriter.WriteHeader(code)
 	rw.wroteHeader = true
@@ -58,5 +63,26 @@ func (s *Server) loggingMiddleware(next http.Handler) http.Handler {
 			time.Since(start),
 			r.UserAgent(),
 		)
+	})
+}
+
+func (s *Server) authMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		apiKey := r.Header.Get("auth")
+		switch {
+		case apiKey == "1":
+			ctx := r.Context()
+			ctx = context.WithValue(ctx, ContextUserKey, fakeUserID1)
+			r = r.WithContext(ctx)
+
+		case apiKey == "2":
+			ctx := r.Context()
+			ctx = context.WithValue(ctx, ContextUserKey, fakeUserID2)
+			r = r.WithContext(ctx)
+		default:
+			w.WriteHeader(http.StatusForbidden)
+			return
+		}
+		next.ServeHTTP(w, r)
 	})
 }

@@ -22,6 +22,10 @@ func New(logger Logger, storage storage.Storage) *App {
 	return &App{Logger: logger, storage: storage}
 }
 
+func (a *App) GetStorage() storage.Storage {
+	return a.storage
+}
+
 func (a *App) CreateEvent(ctx context.Context,
 	id, title, userID string,
 	dateTimeStart time.Time,

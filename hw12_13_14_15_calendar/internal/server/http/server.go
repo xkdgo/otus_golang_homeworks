@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"net/http"
 	"time"
+
+	"github.com/xkdgo/otus_golang_homeworks/hw12_13_14_15_calendar/internal/storage"
 )
 
 type Server struct { // TODO
@@ -28,6 +30,7 @@ type Application interface {
 		DateTimeStart time.Time,
 		Duration, AlarmTime time.Duration) (createdID string, err error)
 	DeleteEvent(ctx context.Context, id string) error
+	GetStorage() storage.Storage
 }
 
 func NewServer(addr string, logger Logger, app Application) *Server {
@@ -39,13 +42,10 @@ func NewServer(addr string, logger Logger, app Application) *Server {
 }
 
 func (s *Server) Start(ctx context.Context) error {
-	// mux := http.NewServeMux()
-	handler := NewRootHandler(s.app, s.logger, http.NewServeMux())
-	// mux.Handle("/", s.loggingMiddleware(http.HandlerFunc(HelloServer)))
-	// mux.Handle("/create", s.loggingMiddleware(http.HandlerFunc(handler.CreateEvent)))
+	handler := NewRootHandler(s.app, s.logger)
 	s.router = &http.Server{
 		Addr:    s.addr,
-		Handler: s.loggingMiddleware(handler),
+		Handler: s.loggingMiddleware(s.authMiddleware(handler)),
 	}
 
 	s.logger.Infof("server started on port %s", s.router.Addr)
