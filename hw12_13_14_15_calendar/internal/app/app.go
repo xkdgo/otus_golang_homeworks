@@ -30,7 +30,13 @@ func (a *App) CreateEvent(ctx context.Context,
 	id, title, userID string,
 	dateTimeStart time.Time,
 	duration, alarmTime time.Duration) (createdID string, err error) {
-	return a.storage.CreateEvent(storage.Event{ID: id, Title: title})
+	return a.storage.CreateEvent(storage.Event{ID: id,
+		Title:         title,
+		UserID:        userID,
+		DateTimeStart: dateTimeStart,
+		Duration:      duration,
+		AlarmTime:     alarmTime,
+	})
 }
 
 func (a *App) DeleteEvent(ctx context.Context, id string) error {

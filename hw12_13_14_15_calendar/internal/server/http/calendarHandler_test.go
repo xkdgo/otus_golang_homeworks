@@ -1,7 +1,9 @@
 package internalhttp
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -73,12 +75,39 @@ func TestCalendarHandler(t *testing.T) {
 		})
 	}
 
+	// modelEvent := models.Event{
+	// 	ID:            "",
+	// 	Title:         "Test Event",
+	// 	DateTimeStart: "01 Feb 22 12:15",
+	// 	Duration:      models.Duration{Duration: time.Hour*2 + time.Hour*24 + time.Minute*20},
+	// 	AlarmTime:     models.Duration{Duration: time.Minute * 15},
+	// }
+
+	// modelEventJson, err := json.Marshal(modelEvent)
+	// fmt.Println(string(modelEventJson))
+	// 5d62f3b3-923c-4514-93a3-64c3dd053f0c
+	eventJsonString := `{"id":"",
+	"title":"Test Event",
+	"datetimestart":"01 Feb 22 12:15 +0500",
+	"duration":"26h20m0s",
+	"alarmtime":"15m0s"}`
+	rawIn := json.RawMessage(eventJsonString)
+	bytesEncoded, err := rawIn.MarshalJSON()
+	buf := bytes.Buffer{}
+	buf.Write(bytesEncoded)
+
 	tests = []Test{
 		{
 			name:           "api/v1/calendar/event/create",
 			args:           args{"POST", "http://calendar/event/create", nil},
 			wantCode:       http.StatusBadRequest,
 			expectedAnswer: "failed to parse create event\n",
+		},
+		{
+			name:           "api/v1/calendar/event/create",
+			args:           args{"POST", "http://calendar/event/create", &buf},
+			wantCode:       http.StatusOK,
+			expectedAnswer: "Hello, your event is created with id",
 		},
 	}
 	for _, tt := range tests {
@@ -95,7 +124,38 @@ func TestCalendarHandler(t *testing.T) {
 			require.Equal(t, tt.wantCode, resp.StatusCode)
 			body, err := ioutil.ReadAll(resp.Body)
 			require.NoError(t, err)
-			require.Equal(t, tt.expectedAnswer, string(body))
+			// require.Equal(t, tt.expectedAnswer, string(body))
+			require.Contains(t, string(body), tt.expectedAnswer)
 		})
 	}
+
+	eventWithID := `{"id":"8abb4997-2dc1-4bf3-b6ca-fe27b12724dd",
+	"title":"Test Event",
+	"datetimestart":"01 Feb 22 12:16 +0500",
+	"duration":"26h20m0s",
+	"alarmtime":"15m0s"}`
+	rawIn = json.RawMessage(eventWithID)
+	bytesEncoded, err = rawIn.MarshalJSON()
+	buf = bytes.Buffer{}
+	buf.Write(bytesEncoded)
+
+	// t.Run("create eventWithID", func(t *testing.T) {
+	// 	r := httptest.NewRequest("POST", "http://calendar/event/create", &buf)
+	// 	ctx := r.Context()
+	// 	ctx = context.WithValue(ctx, ContextUserKey, fakeUserID1)
+	// 	w := httptest.NewRecorder()
+	// 	handler.ServeHTTP(w, r)
+	// 	resp := w.Result()
+	// 	defer resp.Body.Close()
+	// 	require.Equal(t, http.StatusOK, resp.StatusCode)
+	// })
+	// t.Run("delete eventWithID", func(t *testing.T) {
+	// 	r := httptest.NewRequest("POST", "http://calendar/event/delete/8abb4997-2dc1-4bf3-b6ca-fe27b12724dd", nil)
+	// 	ctx := r.Context()
+	// 	ctx = context.WithValue(ctx, ContextUserKey, fakeUserID1)
+	// 	w := httptest.NewRecorder()
+	// 	handler.ServeHTTP(w, r)
+	// 	resp := w.Result()
+	// 	require.Equal(t, http.StatusOK, resp.StatusCode)
+	// })
 }
