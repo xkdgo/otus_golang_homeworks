@@ -34,6 +34,9 @@ type Application interface {
 		dateTimeStart time.Time,
 		duration, alarmTime time.Duration) (err error)
 	DeleteEvent(ctx context.Context, id string) error
+	ListEventsDay(ctx context.Context, userID string, dateTime time.Time) (events []storage.Event, err error)
+	ListEventsWeek(ctx context.Context, userID string, dateTime time.Time) (events []storage.Event, err error)
+	ListEventsMonth(ctx context.Context, userID string, dateTime time.Time) (events []storage.Event, err error)
 	GetStorage() storage.Storage
 }
 

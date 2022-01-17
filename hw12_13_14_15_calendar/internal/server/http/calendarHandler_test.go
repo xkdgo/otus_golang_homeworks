@@ -16,6 +16,11 @@ import (
 	"github.com/xkdgo/otus_golang_homeworks/hw12_13_14_15_calendar/internal/logger"
 )
 
+const (
+	fakeUserID1 = "e5446547-ab14-482f-ab72-791079690665"
+	fakeUserID2 = "933327d2-3b0b-4688-befd-56da81456859"
+)
+
 func TestCalendarHandler(t *testing.T) {
 	storage, err := helper.InitStorage("in-memory", "")
 	require.NoError(t, err)
@@ -48,13 +53,13 @@ func TestCalendarHandler(t *testing.T) {
 			expectedAnswer: "Hello, This is Event Handler",
 		},
 		{
-			name:           "api/v1/calendar/event/create",
+			name:           "api/v1/calendar/event/create | Method not allowed",
 			args:           args{"GET", "http://calendar/event/create", nil},
 			wantCode:       http.StatusMethodNotAllowed,
 			expectedAnswer: "This method not allowed",
 		},
 		{
-			name:           "api/v1/calendar/event/create",
+			name:           "api/v1/calendar/event/create | Unathorized",
 			args:           args{"POST", "http://calendar/event/create", nil},
 			wantCode:       http.StatusUnauthorized,
 			expectedAnswer: "Bad User",
@@ -99,13 +104,13 @@ func TestCalendarHandler(t *testing.T) {
 
 	tests = []Test{
 		{
-			name:           "api/v1/calendar/event/create",
+			name:           "api/v1/calendar/event/create | bad request",
 			args:           args{"POST", "http://calendar/event/create", nil},
 			wantCode:       http.StatusBadRequest,
 			expectedAnswer: "failed to parse create event\n",
 		},
 		{
-			name:           "api/v1/calendar/event/create",
+			name:           "api/v1/calendar/event/create | without eventID",
 			args:           args{"POST", "http://calendar/event/create", &buf},
 			wantCode:       http.StatusOK,
 			expectedAnswer: "Hello, your event is created with id",

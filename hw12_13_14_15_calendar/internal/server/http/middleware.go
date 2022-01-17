@@ -7,11 +7,6 @@ import (
 	"time"
 )
 
-const (
-	fakeUserID1 = "e5446547-ab14-482f-ab72-791079690665"
-	fakeUserID2 = "933327d2-3b0b-4688-befd-56da81456859"
-)
-
 // responseWriter is a minimal wrapper for http.ResponseWriter that allows the
 // written HTTP status code to be captured for logging.
 type responseWriter struct {
@@ -68,16 +63,11 @@ func (s *Server) loggingMiddleware(next http.Handler) http.Handler {
 
 func (s *Server) authMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		apiKey := r.Header.Get("auth")
+		userIDKey := r.Header.Get("x-user-id")
 		switch {
-		case apiKey == "1":
+		case IsValidUUID(userIDKey):
 			ctx := r.Context()
-			ctx = context.WithValue(ctx, ContextUserKey, fakeUserID1)
-			r = r.WithContext(ctx)
-
-		case apiKey == "2":
-			ctx := r.Context()
-			ctx = context.WithValue(ctx, ContextUserKey, fakeUserID2)
+			ctx = context.WithValue(ctx, ContextUserKey, userIDKey)
 			r = r.WithContext(ctx)
 		default:
 			w.WriteHeader(http.StatusForbidden)

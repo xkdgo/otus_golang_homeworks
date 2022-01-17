@@ -56,4 +56,14 @@ func (a *App) DeleteEvent(ctx context.Context, id string) error {
 	return a.storage.DeleteEvent(id)
 }
 
-// TODO
+func (a *App) ListEventsDay(ctx context.Context, userID string, dateTime time.Time) (events []storage.Event, err error) {
+	return a.storage.ListEventsOnDay(userID, dateTime)
+}
+
+func (a *App) ListEventsWeek(ctx context.Context, userID string, dateTime time.Time) (events []storage.Event, err error) {
+	return a.storage.ListEventsOnCurrentWeek(userID, dateTime)
+}
+
+func (a *App) ListEventsMonth(ctx context.Context, userID string, dateTime time.Time) (events []storage.Event, err error) {
+	return a.storage.ListEventsOnCurrentMonth(userID, dateTime)
+}
