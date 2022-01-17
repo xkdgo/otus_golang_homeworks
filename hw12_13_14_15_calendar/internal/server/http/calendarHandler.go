@@ -68,6 +68,12 @@ func (h *CalendarHandler) handleEvent(w http.ResponseWriter, r *http.Request) {
 		} else {
 			UnsupportedMethod(w, r)
 		}
+	case head == "update" && r.URL.Path == "/":
+		if r.Method == "POST" {
+			h.handleUpdateEvent(w, r)
+		} else {
+			UnsupportedMethod(w, r)
+		}
 	}
 }
 
@@ -107,7 +113,45 @@ func (h *CalendarHandler) handleCreateEvent(w http.ResponseWriter, r *http.Reque
 	fmt.Fprintf(w, "Hello, your event is created with id %v", id)
 }
 
-func (h *CalendarHandler) handleDeleteEvent(w http.ResponseWriter, r *http.Request, eventID string) {
+func (h *CalendarHandler) handleUpdateEvent(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		return
+	}
+	ctx := r.Context()
+	userIDValue := ctx.Value(ContextUserKey)
+	userID, ok := userIDValue.(string)
+	if !ok {
+		InvalidUser(w, r)
+		return
+	}
+	jsDecoder := json.NewDecoder(r.Body)
+	var event models.Event
+	err := jsDecoder.Decode(&event)
+	if err != nil {
+		httpBadRequest(w, "failed to parse update event", err, h.logger)
+		return
+	}
+
+	dateTimeStart, err := time.Parse(timelayoutWithMin, event.DateTimeStart)
+	if err != nil {
+		httpBadRequest(w, "failed to parse datetimestart", err, h.logger)
+		return
+	}
+	duration := event.Duration.Duration
+	alarmTime := event.AlarmTime.Duration
+	err = h.app.UpdateEvent(ctx, event.ID, event.Title, userID, dateTimeStart, duration, alarmTime)
+	if err != nil {
+		httpBadRequest(w, "failed to update event", err, h.logger)
+		return
+	}
+	w.WriteHeader(http.StatusOK)
+	fmt.Fprintf(w, "Hello, your event  with id %v is updated", event.ID)
+}
+
+func (h *CalendarHandler) handleDeleteEvent(w http.ResponseWriter, r *http.Request, path string) {
+	var eventID string
+	eventID, _ = ShiftPath(path)
 	if !IsValidUUID(eventID) {
 		httpBadRequest(w, "failed to delete event not valid uuid", fmt.Errorf("%s is not uuid", eventID), h.logger)
 		return
@@ -115,7 +159,7 @@ func (h *CalendarHandler) handleDeleteEvent(w http.ResponseWriter, r *http.Reque
 	ctx := r.Context()
 	err := h.app.DeleteEvent(ctx, eventID)
 	if err != nil {
-		httpBadRequest(w, "failed to create event", err, h.logger)
+		httpInternalServerError(w, "failed to create event", err, h.logger)
 		return
 	}
 	w.WriteHeader(http.StatusOK)

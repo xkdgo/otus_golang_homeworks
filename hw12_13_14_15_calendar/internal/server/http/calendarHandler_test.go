@@ -93,6 +93,7 @@ func TestCalendarHandler(t *testing.T) {
 	"alarmtime":"15m0s"}`
 	rawIn := json.RawMessage(eventJsonString)
 	bytesEncoded, err := rawIn.MarshalJSON()
+	require.NoError(t, err)
 	buf := bytes.Buffer{}
 	buf.Write(bytesEncoded)
 
@@ -136,26 +137,85 @@ func TestCalendarHandler(t *testing.T) {
 	"alarmtime":"15m0s"}`
 	rawIn = json.RawMessage(eventWithID)
 	bytesEncoded, err = rawIn.MarshalJSON()
+	require.NoError(t, err)
 	buf = bytes.Buffer{}
 	buf.Write(bytesEncoded)
 
-	// t.Run("create eventWithID", func(t *testing.T) {
-	// 	r := httptest.NewRequest("POST", "http://calendar/event/create", &buf)
-	// 	ctx := r.Context()
-	// 	ctx = context.WithValue(ctx, ContextUserKey, fakeUserID1)
-	// 	w := httptest.NewRecorder()
-	// 	handler.ServeHTTP(w, r)
-	// 	resp := w.Result()
-	// 	defer resp.Body.Close()
-	// 	require.Equal(t, http.StatusOK, resp.StatusCode)
-	// })
-	// t.Run("delete eventWithID", func(t *testing.T) {
-	// 	r := httptest.NewRequest("POST", "http://calendar/event/delete/8abb4997-2dc1-4bf3-b6ca-fe27b12724dd", nil)
-	// 	ctx := r.Context()
-	// 	ctx = context.WithValue(ctx, ContextUserKey, fakeUserID1)
-	// 	w := httptest.NewRecorder()
-	// 	handler.ServeHTTP(w, r)
-	// 	resp := w.Result()
-	// 	require.Equal(t, http.StatusOK, resp.StatusCode)
-	// })
+	t.Run("create eventWithID", func(t *testing.T) {
+		r := httptest.NewRequest("POST", "http://calendar/event/create", &buf)
+		ctx := r.Context()
+		ctx = context.WithValue(ctx, ContextUserKey, fakeUserID1)
+		r = r.WithContext(ctx)
+		w := httptest.NewRecorder()
+		handler.ServeHTTP(w, r)
+		resp := w.Result()
+		defer resp.Body.Close()
+		require.Equal(t, http.StatusOK, resp.StatusCode)
+	})
+
+	eventWithID = `{"id":"8abb4997-2dc1-4bf3-b6ca-fe27b12724dd",
+	"title":"Test Event Update",
+	"datetimestart":"01 Feb 22 12:16 +0500",
+	"duration":"26h20m0s",
+	"alarmtime":"15m0s"}`
+	rawIn = json.RawMessage(eventWithID)
+	bytesEncoded, err = rawIn.MarshalJSON()
+	require.NoError(t, err)
+	buf = bytes.Buffer{}
+	buf.Write(bytesEncoded)
+
+	t.Run("good update eventWithID", func(t *testing.T) {
+		r := httptest.NewRequest("POST", "http://calendar/event/update", &buf)
+		ctx := r.Context()
+		ctx = context.WithValue(ctx, ContextUserKey, fakeUserID1)
+		r = r.WithContext(ctx)
+		w := httptest.NewRecorder()
+		handler.ServeHTTP(w, r)
+		resp := w.Result()
+		require.Equal(t, http.StatusOK, resp.StatusCode)
+	})
+
+	eventWithID = `{"id":"8abb4997-2dc1-4bf3-b6ca-ffffffffffff",
+	"title":"Test Event Update",
+	"datetimestart":"01 Feb 22 12:16 +0500",
+	"duration":"26h20m0s",
+	"alarmtime":"15m0s"}`
+	rawIn = json.RawMessage(eventWithID)
+	bytesEncoded, err = rawIn.MarshalJSON()
+	require.NoError(t, err)
+	buf = bytes.Buffer{}
+	buf.Write(bytesEncoded)
+
+	t.Run("bad update eventWithID", func(t *testing.T) {
+		r := httptest.NewRequest("POST", "http://calendar/event/update", &buf)
+		ctx := r.Context()
+		ctx = context.WithValue(ctx, ContextUserKey, fakeUserID1)
+		r = r.WithContext(ctx)
+		w := httptest.NewRecorder()
+		handler.ServeHTTP(w, r)
+		resp := w.Result()
+		require.Equal(t, http.StatusBadRequest, resp.StatusCode)
+	})
+
+	t.Run("delete eventWithID", func(t *testing.T) {
+		r := httptest.NewRequest("POST", "http://calendar/event/delete/8abb4997-2dc1-4bf3-b6ca-fe27b12724dd", nil)
+		ctx := r.Context()
+		ctx = context.WithValue(ctx, ContextUserKey, fakeUserID1)
+		r = r.WithContext(ctx)
+		w := httptest.NewRecorder()
+		handler.ServeHTTP(w, r)
+		resp := w.Result()
+		require.Equal(t, http.StatusOK, resp.StatusCode)
+	})
+
+	t.Run("delete again eventWithID status ok anyway", func(t *testing.T) {
+		r := httptest.NewRequest("POST", "http://calendar/event/delete/8abb4997-2dc1-4bf3-b6ca-fe27b12724dd", nil)
+		ctx := r.Context()
+		ctx = context.WithValue(ctx, ContextUserKey, fakeUserID1)
+		r = r.WithContext(ctx)
+		w := httptest.NewRecorder()
+		handler.ServeHTTP(w, r)
+		resp := w.Result()
+		require.Equal(t, http.StatusOK, resp.StatusCode)
+	})
 }

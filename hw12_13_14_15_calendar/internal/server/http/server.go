@@ -29,6 +29,10 @@ type Application interface {
 		id, title, userID string,
 		DateTimeStart time.Time,
 		Duration, AlarmTime time.Duration) (createdID string, err error)
+	UpdateEvent(ctx context.Context,
+		id, title, userID string,
+		dateTimeStart time.Time,
+		duration, alarmTime time.Duration) (err error)
 	DeleteEvent(ctx context.Context, id string) error
 	GetStorage() storage.Storage
 }

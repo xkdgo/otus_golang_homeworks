@@ -39,6 +39,19 @@ func (a *App) CreateEvent(ctx context.Context,
 	})
 }
 
+func (a *App) UpdateEvent(ctx context.Context,
+	id, title, userID string,
+	dateTimeStart time.Time,
+	duration, alarmTime time.Duration) (err error) {
+	return a.storage.UpdateEvent(id, storage.Event{ID: id,
+		Title:         title,
+		UserID:        userID,
+		DateTimeStart: dateTimeStart,
+		Duration:      duration,
+		AlarmTime:     alarmTime,
+	})
+}
+
 func (a *App) DeleteEvent(ctx context.Context, id string) error {
 	return a.storage.DeleteEvent(id)
 }
