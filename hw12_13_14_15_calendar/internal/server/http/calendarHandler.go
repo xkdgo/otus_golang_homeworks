@@ -60,26 +60,26 @@ func (h *CalendarHandler) handleEvent(w http.ResponseWriter, r *http.Request) {
 	case head == "" && r.URL.Path == "/":
 		HelloEventHandler(w, r)
 	case head == "create" && r.URL.Path == "/":
-		if r.Method == "POST" {
+		if r.Method == http.MethodPost {
 			h.handleCreateEvent(w, r)
 		} else {
 			UnsupportedMethod(w, r)
 		}
 	case head == "delete":
-		if r.Method == "POST" {
+		if r.Method == http.MethodPost {
 			h.handleDeleteEvent(w, r)
 		} else {
 			UnsupportedMethod(w, r)
 		}
 	case head == "update" && r.URL.Path == "/":
-		if r.Method == "POST" {
+		if r.Method == http.MethodPost {
 			h.handleUpdateEvent(w, r)
 		} else {
 			UnsupportedMethod(w, r)
 		}
-	case head == "day":
-		if r.Method == "GET" {
-			h.handleGetEventsDay(w, r)
+	case head == "day" || head == "week" || head == "month":
+		if r.Method == http.MethodGet {
+			h.handleGetEventsDayWeekMonth(w, r, head)
 		} else {
 			UnsupportedMethod(w, r)
 		}
@@ -177,7 +177,7 @@ func (h *CalendarHandler) handleDeleteEvent(w http.ResponseWriter, r *http.Reque
 	fmt.Fprintf(w, "Hello, your event is deleted with id %v", eventID)
 }
 
-func (h *CalendarHandler) handleGetEventsDay(w http.ResponseWriter, r *http.Request) {
+func (h *CalendarHandler) handleGetEventsDayWeekMonth(w http.ResponseWriter, r *http.Request, period string) {
 	day, _ := ShiftPath(r.URL.Path)
 	dayTime, err := time.Parse(timelayout, day)
 	ctx := r.Context()
@@ -191,10 +191,26 @@ func (h *CalendarHandler) handleGetEventsDay(w http.ResponseWriter, r *http.Requ
 		InvalidUser(w, r)
 		return
 	}
-	events, err := h.app.ListEventsDay(ctx, userID, dayTime)
-	if err != nil {
-		httpInternalServerError(w, "failed to create event", err, h.logger)
-		return
+	var events []storage.Event
+	switch period {
+	case "day":
+		events, err = h.app.ListEventsDay(ctx, userID, dayTime)
+		if err != nil {
+			httpInternalServerError(w, "failed to list events day", err, h.logger)
+			return
+		}
+	case "week":
+		events, err = h.app.ListEventsWeek(ctx, userID, dayTime)
+		if err != nil {
+			httpInternalServerError(w, "failed to list events week", err, h.logger)
+			return
+		}
+	case "month":
+		events, err = h.app.ListEventsMonth(ctx, userID, dayTime)
+		if err != nil {
+			httpInternalServerError(w, "failed to list events month", err, h.logger)
+			return
+		}
 	}
 	modelEvents := convertToModelsEvents(events)
 	w.WriteHeader(http.StatusOK)

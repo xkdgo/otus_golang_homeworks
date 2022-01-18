@@ -21,7 +21,7 @@ const (
 	fakeUserID2 = "933327d2-3b0b-4688-befd-56da81456859"
 )
 
-func TestCalendarHandler(t *testing.T) {
+func TestCalendarHandler(t *testing.T) { //nolint:funlen
 	storage, err := helper.InitStorage("in-memory", "")
 	require.NoError(t, err)
 	logg := logger.New("DEBUG")
@@ -38,31 +38,24 @@ func TestCalendarHandler(t *testing.T) {
 		wantCode       int
 		expectedAnswer interface{}
 	}
-
 	tests := []Test{
 		{
-			name:           "root calendar",
-			args:           args{"GET", "http://calendar", nil},
-			wantCode:       http.StatusOK,
-			expectedAnswer: "Hello, Calendar",
+			"root calendar", args{"GET", "http://calendar", nil}, http.StatusOK, "Hello, Calendar",
 		},
 		{
-			name:           "api/v1/calendar/event",
-			args:           args{"GET", "http://calendar/event", nil},
-			wantCode:       http.StatusOK,
-			expectedAnswer: "Hello, This is Event Handler",
+			"api/v1/calendar/event", args{"GET", "http://calendar/event", nil}, http.StatusOK, "Hello, This is Event Handler",
 		},
 		{
-			name:           "api/v1/calendar/event/create | Method not allowed",
-			args:           args{"GET", "http://calendar/event/create", nil},
-			wantCode:       http.StatusMethodNotAllowed,
-			expectedAnswer: "This method not allowed",
+			"api/v1/calendar/event/create | Method not allowed",
+			args{"GET", "http://calendar/event/create", nil},
+			http.StatusMethodNotAllowed,
+			"This method not allowed",
 		},
 		{
-			name:           "api/v1/calendar/event/create | Unathorized",
-			args:           args{"POST", "http://calendar/event/create", nil},
-			wantCode:       http.StatusUnauthorized,
-			expectedAnswer: "Bad User",
+			"api/v1/calendar/event/create | Unathorized",
+			args{"POST", "http://calendar/event/create", nil},
+			http.StatusUnauthorized,
+			"Bad User",
 		},
 	}
 	for _, tt := range tests {
@@ -80,23 +73,12 @@ func TestCalendarHandler(t *testing.T) {
 		})
 	}
 
-	// modelEvent := models.Event{
-	// 	ID:            "",
-	// 	Title:         "Test Event",
-	// 	DateTimeStart: "01 Feb 22 12:15",
-	// 	Duration:      models.Duration{Duration: time.Hour*2 + time.Hour*24 + time.Minute*20},
-	// 	AlarmTime:     models.Duration{Duration: time.Minute * 15},
-	// }
-
-	// modelEventJson, err := json.Marshal(modelEvent)
-	// fmt.Println(string(modelEventJson))
-	// 5d62f3b3-923c-4514-93a3-64c3dd053f0c
-	eventJsonString := `{"id":"",
+	eventJSONString := `{"id":"",
 	"title":"Test Event",
 	"datetimestart":"01 Feb 22 12:15 +0500",
 	"duration":"26h20m0s",
 	"alarmtime":"15m0s"}`
-	rawIn := json.RawMessage(eventJsonString)
+	rawIn := json.RawMessage(eventJSONString)
 	bytesEncoded, err := rawIn.MarshalJSON()
 	require.NoError(t, err)
 	buf := bytes.Buffer{}
@@ -177,6 +159,7 @@ func TestCalendarHandler(t *testing.T) {
 		w := httptest.NewRecorder()
 		handler.ServeHTTP(w, r)
 		resp := w.Result()
+		defer resp.Body.Close()
 		require.Equal(t, http.StatusOK, resp.StatusCode)
 	})
 
@@ -199,6 +182,7 @@ func TestCalendarHandler(t *testing.T) {
 		w := httptest.NewRecorder()
 		handler.ServeHTTP(w, r)
 		resp := w.Result()
+		defer resp.Body.Close()
 		require.Equal(t, http.StatusBadRequest, resp.StatusCode)
 	})
 
@@ -210,6 +194,7 @@ func TestCalendarHandler(t *testing.T) {
 		w := httptest.NewRecorder()
 		handler.ServeHTTP(w, r)
 		resp := w.Result()
+		defer resp.Body.Close()
 		require.Equal(t, http.StatusOK, resp.StatusCode)
 	})
 
@@ -221,6 +206,7 @@ func TestCalendarHandler(t *testing.T) {
 		w := httptest.NewRecorder()
 		handler.ServeHTTP(w, r)
 		resp := w.Result()
+		defer resp.Body.Close()
 		require.Equal(t, http.StatusOK, resp.StatusCode)
 	})
 }

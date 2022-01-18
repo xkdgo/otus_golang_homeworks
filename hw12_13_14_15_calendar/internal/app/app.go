@@ -30,7 +30,8 @@ func (a *App) CreateEvent(ctx context.Context,
 	id, title, userID string,
 	dateTimeStart time.Time,
 	duration, alarmTime time.Duration) (createdID string, err error) {
-	return a.storage.CreateEvent(storage.Event{ID: id,
+	return a.storage.CreateEvent(storage.Event{
+		ID:            id,
 		Title:         title,
 		UserID:        userID,
 		DateTimeStart: dateTimeStart,
@@ -43,7 +44,8 @@ func (a *App) UpdateEvent(ctx context.Context,
 	id, title, userID string,
 	dateTimeStart time.Time,
 	duration, alarmTime time.Duration) (err error) {
-	return a.storage.UpdateEvent(id, storage.Event{ID: id,
+	return a.storage.UpdateEvent(id, storage.Event{
+		ID:            id,
 		Title:         title,
 		UserID:        userID,
 		DateTimeStart: dateTimeStart,
@@ -56,14 +58,23 @@ func (a *App) DeleteEvent(ctx context.Context, id string) error {
 	return a.storage.DeleteEvent(id)
 }
 
-func (a *App) ListEventsDay(ctx context.Context, userID string, dateTime time.Time) (events []storage.Event, err error) {
+func (a *App) ListEventsDay(
+	ctx context.Context,
+	userID string,
+	dateTime time.Time) (events []storage.Event, err error) {
 	return a.storage.ListEventsOnDay(userID, dateTime)
 }
 
-func (a *App) ListEventsWeek(ctx context.Context, userID string, dateTime time.Time) (events []storage.Event, err error) {
+func (a *App) ListEventsWeek(
+	ctx context.Context,
+	userID string,
+	dateTime time.Time) (events []storage.Event, err error) {
 	return a.storage.ListEventsOnCurrentWeek(userID, dateTime)
 }
 
-func (a *App) ListEventsMonth(ctx context.Context, userID string, dateTime time.Time) (events []storage.Event, err error) {
+func (a *App) ListEventsMonth(
+	ctx context.Context,
+	userID string,
+	dateTime time.Time) (events []storage.Event, err error) {
 	return a.storage.ListEventsOnCurrentMonth(userID, dateTime)
 }

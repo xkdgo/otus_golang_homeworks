@@ -28,6 +28,7 @@ func TestCalendarDayWeekMonthHandler(t *testing.T) {
 		DaysInFeb      = 28
 		NumsOfDayTasks = 8
 		StartHour      = 8
+		daysInWeek     = 7
 	)
 	for day := 1; day < DaysInFeb+1; day++ {
 		for hour := 8; hour < StartHour+NumsOfDayTasks; hour++ {
@@ -73,5 +74,56 @@ func TestCalendarDayWeekMonthHandler(t *testing.T) {
 		err = json.Unmarshal(body, &result)
 		require.NoError(t, err)
 		require.Len(t, result, NumsOfDayTasks)
+	})
+
+	// Test get events per week
+	t.Run("Test get events per week", func(t *testing.T) {
+		var result []models.Event
+		r := httptest.NewRequest("GET", "http://calendar/event/week/2022-02-01", nil)
+		ctx := r.Context()
+		ctx = context.WithValue(ctx, ContextUserKey, fakeUserID1)
+		r = r.WithContext(ctx)
+		w := httptest.NewRecorder()
+		handler.ServeHTTP(w, r)
+		resp := w.Result()
+		defer resp.Body.Close()
+		require.Equal(t, http.StatusOK, resp.StatusCode)
+		body, err := ioutil.ReadAll(resp.Body)
+		require.NoError(t, err)
+		err = json.Unmarshal(body, &result)
+		require.NoError(t, err)
+		require.Len(t, result, NumsOfDayTasks*(daysInWeek-1))
+	})
+
+	// Test get events per month
+	t.Run("Test get events per month", func(t *testing.T) {
+		var result []models.Event
+		r := httptest.NewRequest("GET", "http://calendar/event/month/2022-02-01", nil)
+		ctx := r.Context()
+		ctx = context.WithValue(ctx, ContextUserKey, fakeUserID1)
+		r = r.WithContext(ctx)
+		w := httptest.NewRecorder()
+		handler.ServeHTTP(w, r)
+		resp := w.Result()
+		defer resp.Body.Close()
+		require.Equal(t, http.StatusOK, resp.StatusCode)
+		body, err := ioutil.ReadAll(resp.Body)
+		require.NoError(t, err)
+		err = json.Unmarshal(body, &result)
+		require.NoError(t, err)
+		require.Len(t, result, NumsOfDayTasks*DaysInFeb)
+	})
+
+	// Test get events per month
+	t.Run("Test get events per month with unknown user", func(t *testing.T) {
+		r := httptest.NewRequest("GET", "http://calendar/event/month/2022-02-01", nil)
+		ctx := r.Context()
+		ctx = context.WithValue(ctx, ContextUserKey, fakeUserID2)
+		r = r.WithContext(ctx)
+		w := httptest.NewRecorder()
+		handler.ServeHTTP(w, r)
+		resp := w.Result()
+		defer resp.Body.Close()
+		require.Equal(t, http.StatusInternalServerError, resp.StatusCode)
 	})
 }
