@@ -1,3 +1,6 @@
+generate:
+	go generate ./...
+
 BIN := "./bin/calendar"
 DOCKER_IMG="calendar:develop"
 

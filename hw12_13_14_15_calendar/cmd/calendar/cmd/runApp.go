@@ -13,6 +13,7 @@ import (
 	"github.com/xkdgo/otus_golang_homeworks/hw12_13_14_15_calendar/internal/app"
 	"github.com/xkdgo/otus_golang_homeworks/hw12_13_14_15_calendar/internal/helper"
 	"github.com/xkdgo/otus_golang_homeworks/hw12_13_14_15_calendar/internal/logger"
+	internalgrpc "github.com/xkdgo/otus_golang_homeworks/hw12_13_14_15_calendar/internal/server/grpc"
 	internalhttp "github.com/xkdgo/otus_golang_homeworks/hw12_13_14_15_calendar/internal/server/http"
 )
 
@@ -35,8 +36,15 @@ func RunApp(config Config) {
 
 	serverHTTP := internalhttp.NewServer(net.JoinHostPort(config.ServerHTTP.Host, config.ServerHTTP.Port), logg, calendar)
 
+	serverGRPC, err := internalgrpc.NewEventServiceServer(net.JoinHostPort(config.ServerGRPC.Host, config.ServerGRPC.Port), logg, calendar)
+	if err != nil {
+		logg.Error("cant init serviceGRPC:", errors.Wrapf(err, "%s", net.JoinHostPort(config.ServerHTTP.Host, config.ServerHTTP.Port)))
+		cancel()
+		os.Exit(1) //nolint:gocritic
+	}
+
 	go func() {
-		fmt.Println("goroutine started")
+		fmt.Println("listen to stop signal goroutine started")
 		<-ctx.Done()
 		fmt.Println("context Done")
 
@@ -46,6 +54,9 @@ func RunApp(config Config) {
 		if err := serverHTTP.Stop(ctx); err != nil {
 			logg.Error("failed to stop http server: " + err.Error())
 		}
+		if err := serverGRPC.Stop(ctx); err != nil {
+			logg.Error("failed to stop grpc server: " + err.Error())
+		}
 		close(exitCh)
 	}()
 
@@ -53,6 +64,12 @@ func RunApp(config Config) {
 	go func() {
 		if err := serverHTTP.Start(ctx); err != nil {
 			logg.Error("failed to start http server: " + err.Error())
+			cancel()
+		}
+	}()
+	go func() {
+		if err := serverGRPC.Start(ctx); err != nil {
+			logg.Error("failed to start grpc server: " + err.Error())
 			cancel()
 		}
 	}()
