@@ -12,9 +12,10 @@ var (
 )
 
 type Config struct {
-	Logger  LoggerConf  `mapstructure:"logger"`
-	Server  ServerConf  `mapstructure:"server"`
-	Storage StorageConf `mapstructure:"db"`
+	Logger     LoggerConf  `mapstructure:"logger"`
+	ServerHTTP ServerConf  `mapstructure:"server"`
+	ServerGRPC ServerConf  `mapstructure:"grpc"`
+	Storage    StorageConf `mapstructure:"db"`
 }
 
 type LoggerConf struct {

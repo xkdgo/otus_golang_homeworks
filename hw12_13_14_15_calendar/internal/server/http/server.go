@@ -55,7 +55,7 @@ func (s *Server) Start(ctx context.Context) error {
 		Handler: s.loggingMiddleware(s.authMiddleware(handler)),
 	}
 
-	s.logger.Infof("server started on port %s", s.router.Addr)
+	s.logger.Infof("http server started on port %s", s.router.Addr)
 	err := s.router.ListenAndServe()
 	if errors.Is(err, http.ErrServerClosed) {
 		return nil

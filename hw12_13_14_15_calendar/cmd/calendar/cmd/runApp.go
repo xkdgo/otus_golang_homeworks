@@ -28,11 +28,12 @@ func RunApp(config Config) {
 	if err != nil {
 		logg.Error("cant init storage:", errors.Wrapf(err, "%s", config.Storage.Type))
 		cancel()
+		os.Exit(1) //nolint:gocritic
 	}
 	defer storage.Close()
 	calendar := app.New(logg, storage)
 
-	server := internalhttp.NewServer(net.JoinHostPort(config.Server.Host, config.Server.Port), logg, calendar)
+	serverHTTP := internalhttp.NewServer(net.JoinHostPort(config.ServerHTTP.Host, config.ServerHTTP.Port), logg, calendar)
 
 	go func() {
 		fmt.Println("goroutine started")
@@ -42,18 +43,19 @@ func RunApp(config Config) {
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second*3)
 		defer cancel()
 
-		if err := server.Stop(ctx); err != nil {
+		if err := serverHTTP.Stop(ctx); err != nil {
 			logg.Error("failed to stop http server: " + err.Error())
 		}
 		close(exitCh)
 	}()
 
 	logg.Info("calendar is running...")
+	go func() {
+		if err := serverHTTP.Start(ctx); err != nil {
+			logg.Error("failed to start http server: " + err.Error())
+			cancel()
+		}
+	}()
 
-	if err := server.Start(ctx); err != nil {
-		logg.Error("failed to start http server: " + err.Error())
-		cancel()
-		os.Exit(1) //nolint:gocritic
-	}
 	<-exitCh
 }
