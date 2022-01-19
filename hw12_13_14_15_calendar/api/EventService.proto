@@ -27,7 +27,7 @@ message DeleteEventRequest {
 
 message ListEventsRequest {
     string userID = 1;
-    google.protobuf.Timestamp datetimestart = 2;
+    string datetimestart = 3;
 }
 
 message Events {
