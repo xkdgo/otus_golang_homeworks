@@ -46,8 +46,9 @@ func TestStorageGetEvents(t *testing.T) {
 
 			testdata.DateTimeStart, err = time.Parse(timelayoutWithMin, fmt.Sprintf("%02d Jan 22 12:15 +0500", i))
 			require.NoError(t, err)
-			_, err = sqlst.CreateEvent(testdata)
+			id, err := sqlst.CreateEvent(testdata)
 			require.NoError(t, err)
+			require.Equal(t, testdata.ID, id)
 		}
 
 		for i := 1; i <= daysInFeb; i++ {
@@ -57,8 +58,9 @@ func TestStorageGetEvents(t *testing.T) {
 			testdata.UserID = userIDSecond
 			testdata.DateTimeStart, err = time.Parse(timelayoutWithMin, fmt.Sprintf("%02d Feb 22 12:15 +0500", i))
 			require.NoError(t, err)
-			_, err = sqlst.CreateEvent(testdata)
+			id, err := sqlst.CreateEvent(testdata)
 			require.NoError(t, err)
+			require.Equal(t, testdata.ID, id)
 		}
 
 		testTime, err := time.Parse(timelayout, "2021-01-02")

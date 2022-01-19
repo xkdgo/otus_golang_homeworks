@@ -81,7 +81,7 @@ func (s *Storage) CreateEvent(ev storage.Event) (id string, err error) {
 		fmt.Println(err)
 		return "", err
 	}
-	return id, nil
+	return ev.ID, nil
 }
 
 func (s *Storage) UpdateEvent(id string, event storage.Event) error {
