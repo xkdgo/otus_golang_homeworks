@@ -28,11 +28,13 @@ type Application interface {
 	CreateEvent(ctx context.Context,
 		id, title, userID string,
 		DateTimeStart time.Time,
-		Duration, AlarmTime time.Duration) (createdID string, err error)
+		Duration time.Duration,
+		AlarmTime time.Time) (createdID string, err error)
 	UpdateEvent(ctx context.Context,
 		id, title, userID string,
 		dateTimeStart time.Time,
-		duration, alarmTime time.Duration) (err error)
+		duration time.Duration,
+		alarmTime time.Time) (err error)
 	DeleteEvent(ctx context.Context, id string) error
 	ListEventsDay(ctx context.Context, userID string, dateTime time.Time) (events []storage.Event, err error)
 	ListEventsWeek(ctx context.Context, userID string, dateTime time.Time) (events []storage.Event, err error)

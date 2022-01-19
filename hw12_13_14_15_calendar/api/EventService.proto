@@ -14,7 +14,7 @@ message Event {
   string userID = 3;
   google.protobuf.Timestamp datetimestart = 4;
   google.protobuf.Duration duration = 5; 
-  google.protobuf.Duration alarmtime = 6;
+  google.protobuf.Timestamp alarmtime = 7;
 }
 
 message CreateEventResponse {

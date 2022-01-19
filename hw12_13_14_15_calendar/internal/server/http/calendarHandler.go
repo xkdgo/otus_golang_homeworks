@@ -114,7 +114,11 @@ func (h *CalendarHandler) handleCreateEvent(w http.ResponseWriter, r *http.Reque
 		return
 	}
 	duration := event.Duration.Duration
-	alarmTime := event.AlarmTime.Duration
+	alarmTime, err := time.Parse(timelayoutWithMin, event.AlarmTime)
+	if err != nil {
+		httpBadRequest(w, "failed to parse alarmtime", err, h.logger)
+		return
+	}
 	id, err := h.app.CreateEvent(ctx, event.ID, event.Title, userID, dateTimeStart, duration, alarmTime)
 	if err != nil {
 		httpBadRequest(w, "failed to create event", err, h.logger)
@@ -150,7 +154,11 @@ func (h *CalendarHandler) handleUpdateEvent(w http.ResponseWriter, r *http.Reque
 		return
 	}
 	duration := event.Duration.Duration
-	alarmTime := event.AlarmTime.Duration
+	alarmTime, err := time.Parse(timelayoutWithMin, event.AlarmTime)
+	if err != nil {
+		httpBadRequest(w, "failed to parse alarmTime", err, h.logger)
+		return
+	}
 	err = h.app.UpdateEvent(ctx, event.ID, event.Title, userID, dateTimeStart, duration, alarmTime)
 	if err != nil {
 		httpBadRequest(w, "failed to update event", err, h.logger)
@@ -240,7 +248,7 @@ func convertToModelsEvents(events []storage.Event) (modelsEvents []models.Event)
 		modelEvent.Title = event.Title
 		modelEvent.DateTimeStart = event.DateTimeStart.Format(timelayoutWithMin)
 		modelEvent.Duration.Duration = event.Duration
-		modelEvent.AlarmTime.Duration = event.AlarmTime
+		modelEvent.AlarmTime = event.AlarmTime.Format(timelayoutWithMin)
 		modelsEvents = append(modelsEvents, modelEvent)
 	}
 	return modelsEvents

@@ -29,7 +29,8 @@ func (a *App) GetStorage() storage.Storage {
 func (a *App) CreateEvent(ctx context.Context,
 	id, title, userID string,
 	dateTimeStart time.Time,
-	duration, alarmTime time.Duration) (createdID string, err error) {
+	duration time.Duration,
+	alarmTime time.Time) (createdID string, err error) {
 	return a.storage.CreateEvent(storage.Event{
 		ID:            id,
 		Title:         title,
@@ -43,7 +44,8 @@ func (a *App) CreateEvent(ctx context.Context,
 func (a *App) UpdateEvent(ctx context.Context,
 	id, title, userID string,
 	dateTimeStart time.Time,
-	duration, alarmTime time.Duration) (err error) {
+	duration time.Duration,
+	alarmTime time.Time) (err error) {
 	return a.storage.UpdateEvent(id, storage.Event{
 		ID:            id,
 		Title:         title,

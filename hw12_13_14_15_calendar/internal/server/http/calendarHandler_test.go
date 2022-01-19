@@ -77,7 +77,7 @@ func TestCalendarHandler(t *testing.T) { //nolint:funlen
 	"title":"Test Event",
 	"datetimestart":"01 Feb 22 12:15 +0500",
 	"duration":"26h20m0s",
-	"alarmtime":"15m0s"}`
+	"alarmtime":"01 Feb 22 12:00 +0500"}`
 	rawIn := json.RawMessage(eventJSONString)
 	bytesEncoded, err := rawIn.MarshalJSON()
 	require.NoError(t, err)
@@ -121,7 +121,7 @@ func TestCalendarHandler(t *testing.T) { //nolint:funlen
 	"title":"Test Event",
 	"datetimestart":"01 Feb 22 12:16 +0500",
 	"duration":"26h20m0s",
-	"alarmtime":"15m0s"}`
+	"alarmtime":"01 Feb 22 12:00 +0500"}`
 	rawIn = json.RawMessage(eventWithID)
 	bytesEncoded, err = rawIn.MarshalJSON()
 	require.NoError(t, err)
@@ -144,7 +144,7 @@ func TestCalendarHandler(t *testing.T) { //nolint:funlen
 	"title":"Test Event Update",
 	"datetimestart":"01 Feb 22 12:16 +0500",
 	"duration":"26h20m0s",
-	"alarmtime":"15m0s"}`
+	"alarmtime":"01 Feb 22 12:00 +0500"}`
 	rawIn = json.RawMessage(eventWithID)
 	bytesEncoded, err = rawIn.MarshalJSON()
 	require.NoError(t, err)
@@ -167,7 +167,7 @@ func TestCalendarHandler(t *testing.T) { //nolint:funlen
 	"title":"Test Event Update",
 	"datetimestart":"01 Feb 22 12:16 +0500",
 	"duration":"26h20m0s",
-	"alarmtime":"15m0s"}`
+	"alarmtime":"01 Feb 22 12:00 +0500"}`
 	rawIn = json.RawMessage(eventWithID)
 	bytesEncoded, err = rawIn.MarshalJSON()
 	require.NoError(t, err)

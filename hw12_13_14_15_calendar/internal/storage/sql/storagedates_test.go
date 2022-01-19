@@ -46,6 +46,8 @@ func TestStorageGetEvents(t *testing.T) {
 
 			testdata.DateTimeStart, err = time.Parse(timelayoutWithMin, fmt.Sprintf("%02d Jan 22 12:15 +0500", i))
 			require.NoError(t, err)
+			testdata.AlarmTime, err = time.Parse(timelayoutWithMin, fmt.Sprintf("%02d Jan 22 12:00 +0500", i))
+			require.NoError(t, err)
 			id, err := sqlst.CreateEvent(testdata)
 			require.NoError(t, err)
 			require.Equal(t, testdata.ID, id)
@@ -57,6 +59,8 @@ func TestStorageGetEvents(t *testing.T) {
 			testdata.ID = utilstorage.GenerateUUID()
 			testdata.UserID = userIDSecond
 			testdata.DateTimeStart, err = time.Parse(timelayoutWithMin, fmt.Sprintf("%02d Feb 22 12:15 +0500", i))
+			require.NoError(t, err)
+			testdata.AlarmTime, err = time.Parse(timelayoutWithMin, fmt.Sprintf("%02d Jan 22 12:00 +0500", i))
 			require.NoError(t, err)
 			id, err := sqlst.CreateEvent(testdata)
 			require.NoError(t, err)

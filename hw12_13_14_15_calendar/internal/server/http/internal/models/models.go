@@ -11,7 +11,7 @@ type Event struct {
 	Title         string   `json:"title"`
 	DateTimeStart string   `json:"datetimestart"`
 	Duration      Duration `json:"duration"`
-	AlarmTime     Duration `json:"alarmtime"`
+	AlarmTime     string   `json:"alarmtime"`
 }
 
 type Duration struct {

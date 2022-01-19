@@ -36,7 +36,7 @@ func TestCalendarDayWeekMonthHandler(t *testing.T) {
 			"title":"Test Event",
 			"datetimestart":"%02d Feb 22 %02d:16 +0500",
 			"duration":"1h",
-			"alarmtime":"15m0s"}`, day, hour)
+			"alarmtime":"%02d Feb 22 %02d:00 +0500"}`, day, hour, day, hour)
 			rawIn := json.RawMessage(event)
 			bytesEncoded, err := rawIn.MarshalJSON()
 			require.NoError(t, err)

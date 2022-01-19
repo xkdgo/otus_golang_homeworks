@@ -254,7 +254,7 @@ func convertToDBEvent(ev storage.Event) (pgEvent, error) {
 	dbEvent.Userid = ev.UserID
 	dbEvent.Datetimestart = ev.DateTimeStart
 	dbEvent.Tilldate = ev.DateTimeStart.Add(ev.Duration)
-	dbEvent.Alarmdatetime = ev.DateTimeStart.Add(-1 * ev.Duration)
+	dbEvent.Alarmdatetime = ev.AlarmTime
 	return dbEvent, nil
 }
 
@@ -266,7 +266,7 @@ func convertToStorageEvent(pgEv pgEvent) storage.Event {
 	storageEvent.UserID = pgEv.Userid
 	storageEvent.DateTimeStart = pgEv.Datetimestart
 	storageEvent.Duration = pgEv.Tilldate.Sub(pgEv.Datetimestart)
-	storageEvent.AlarmTime = pgEv.Datetimestart.Sub(pgEv.Alarmdatetime)
+	storageEvent.AlarmTime = pgEv.Alarmdatetime
 	return storageEvent
 }
 

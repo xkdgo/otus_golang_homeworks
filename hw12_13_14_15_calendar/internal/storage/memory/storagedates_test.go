@@ -31,6 +31,8 @@ func TestStorageGetEvents(t *testing.T) {
 			testdata.UserID = "1"
 			testdata.DateTimeStart, err = time.Parse(timelayoutWithMin, fmt.Sprintf("%02d Jan 22 12:15 +0500", i))
 			require.NoError(t, err)
+			testdata.AlarmTime, err = time.Parse(timelayoutWithMin, fmt.Sprintf("%02d Jan 22 12:00 +0500", i))
+			require.NoError(t, err)
 			_, err = memst.CreateEvent(testdata)
 			require.NoError(t, err)
 		}
@@ -43,6 +45,8 @@ func TestStorageGetEvents(t *testing.T) {
 			require.NoError(t, err)
 			testdata.UserID = "2"
 			testdata.DateTimeStart, err = time.Parse(timelayoutWithMin, fmt.Sprintf("%02d Feb 22 12:15 +0500", i))
+			require.NoError(t, err)
+			testdata.AlarmTime, err = time.Parse(timelayoutWithMin, fmt.Sprintf("%02d Jan 22 12:00 +0500", i))
 			require.NoError(t, err)
 			_, err = memst.CreateEvent(testdata)
 			require.NoError(t, err)
