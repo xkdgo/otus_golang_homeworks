@@ -85,11 +85,17 @@ func (s *Storage) CreateEvent(ev storage.Event) (id string, err error) {
 }
 
 func (s *Storage) UpdateEvent(id string, event storage.Event) error {
+	if id == "" {
+		return storage.ErrEventIDNotFound
+	}
 	if event.ID == "" {
 		event.ID = id
 	}
 	if id != event.ID {
 		return storage.ErrMismatchedID
+	}
+	if err := s.checkEventIDisPresent(id); err != nil {
+		return err
 	}
 	dbConvertedEvent, err := convertToDBEvent(event)
 	if err != nil {
@@ -236,6 +242,26 @@ func (s *Storage) checkUserIDisPresent(userID string) error {
 		}
 		if usercount == 0 {
 			return storage.ErrUnkownUserID
+		}
+	}
+	return nil
+}
+
+func (s *Storage) checkEventIDisPresent(eventID string) error {
+	rows, err := s.db.Query(`SELECT COUNT(*) AS eventcount
+                             FROM public.events
+                             WHERE id = $1`, eventID)
+	if err != nil {
+		return errors.Wrap(err, ": while query userid count")
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var eventcount int64
+		if err := rows.Scan(&eventcount); err != nil {
+			return errors.Wrap(err, ": while query eventcount")
+		}
+		if eventcount == 0 {
+			return storage.ErrEventIDNotFound
 		}
 	}
 	return nil
