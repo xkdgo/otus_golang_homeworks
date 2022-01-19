@@ -8,7 +8,6 @@ import (
 	"net"
 	"time"
 
-	"github.com/pkg/errors"
 	pb "github.com/xkdgo/otus_golang_homeworks/hw12_13_14_15_calendar/internal/server/grpc/proto"
 	"github.com/xkdgo/otus_golang_homeworks/hw12_13_14_15_calendar/internal/storage"
 	"google.golang.org/grpc"
@@ -60,12 +59,20 @@ type Server struct {
 	logger   Logger
 }
 
-func NewEventServiceServer(addr string, logger Logger, app Application) (*Server, error) {
+func GetListener(addr string) (net.Listener, error) {
 	lis, err := net.Listen("tcp", addr)
 	if err != nil {
-		logger.Error(errors.Wrap(err, ":failed to listen host/port"))
 		return nil, err
 	}
+	return lis, nil
+}
+
+func NewEventServiceServer(lis net.Listener, logger Logger, app Application) (*Server, error) {
+	// lis, err := net.Listen("tcp", addr)
+	// if err != nil {
+	// 	logger.Error(errors.Wrap(err, ":failed to listen host/port"))
+	// 	return nil, err
+	// }
 	grpcServer := grpc.NewServer()
 	service := &Service{
 		logger: logger,

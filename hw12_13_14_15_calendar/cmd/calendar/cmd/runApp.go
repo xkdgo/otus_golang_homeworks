@@ -38,9 +38,16 @@ func RunApp(config Config) {
 		net.JoinHostPort(config.ServerHTTP.Host, config.ServerHTTP.Port),
 		logg,
 		calendar)
-
-	serverGRPC, err := internalgrpc.NewEventServiceServer(
+	listener, err := internalgrpc.GetListener(
 		net.JoinHostPort(config.ServerGRPC.Host, config.ServerGRPC.Port),
+	)
+	if err != nil {
+		logg.Error(errors.Wrap(err, ":failed to listen host/port"))
+		cancel()
+		os.Exit(1)
+	}
+	serverGRPC, err := internalgrpc.NewEventServiceServer(
+		listener,
 		logg,
 		calendar)
 	if err != nil {
