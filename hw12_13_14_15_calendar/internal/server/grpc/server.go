@@ -8,16 +8,15 @@ import (
 	"net"
 	"time"
 
+	"github.com/pkg/errors"
+	pb "github.com/xkdgo/otus_golang_homeworks/hw12_13_14_15_calendar/internal/server/grpc/proto"
+	"github.com/xkdgo/otus_golang_homeworks/hw12_13_14_15_calendar/internal/storage"
+	"google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/durationpb"
 	"google.golang.org/protobuf/types/known/emptypb"
 	"google.golang.org/protobuf/types/known/timestamppb"
-
-	"github.com/pkg/errors"
-	pb "github.com/xkdgo/otus_golang_homeworks/hw12_13_14_15_calendar/internal/server/grpc/proto"
-	"github.com/xkdgo/otus_golang_homeworks/hw12_13_14_15_calendar/internal/storage"
-	"google.golang.org/grpc"
 )
 
 const (
@@ -76,7 +75,8 @@ func NewEventServiceServer(addr string, logger Logger, app Application) (*Server
 	return &Server{
 		router:   grpcServer,
 		listener: lis,
-		logger:   logger}, nil
+		logger:   logger,
+	}, nil
 }
 
 func (s *Server) Start(ctx context.Context) error {
@@ -94,7 +94,14 @@ func (s *Server) Stop(ctx context.Context) error {
 }
 
 func (s *Service) CreateEvent(ctx context.Context, ev *pb.Event) (res *pb.CreateEventResponse, err error) {
-	id, err := s.app.CreateEvent(ctx, ev.Id, ev.Title, ev.UserID, ev.Datetimestart.AsTime(), ev.Duration.AsDuration(), ev.Alarmtime.AsTime())
+	id, err := s.app.CreateEvent(
+		ctx,
+		ev.Id,
+		ev.Title,
+		ev.UserID,
+		ev.Datetimestart.AsTime(),
+		ev.Duration.AsDuration(),
+		ev.Alarmtime.AsTime())
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, err.Error())
 	}
@@ -102,7 +109,14 @@ func (s *Service) CreateEvent(ctx context.Context, ev *pb.Event) (res *pb.Create
 }
 
 func (s *Service) UpdateEvent(ctx context.Context, ev *pb.Event) (empty *emptypb.Empty, err error) {
-	err = s.app.UpdateEvent(ctx, ev.Id, ev.Title, ev.UserID, ev.Datetimestart.AsTime(), ev.Duration.AsDuration(), ev.Alarmtime.AsTime())
+	err = s.app.UpdateEvent(
+		ctx,
+		ev.Id,
+		ev.Title,
+		ev.UserID,
+		ev.Datetimestart.AsTime(),
+		ev.Duration.AsDuration(),
+		ev.Alarmtime.AsTime())
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, err.Error())
 	}

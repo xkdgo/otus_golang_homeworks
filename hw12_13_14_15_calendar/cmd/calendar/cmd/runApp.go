@@ -34,13 +34,21 @@ func RunApp(config Config) {
 	defer storage.Close()
 	calendar := app.New(logg, storage)
 
-	serverHTTP := internalhttp.NewServer(net.JoinHostPort(config.ServerHTTP.Host, config.ServerHTTP.Port), logg, calendar)
+	serverHTTP := internalhttp.NewServer(
+		net.JoinHostPort(config.ServerHTTP.Host, config.ServerHTTP.Port),
+		logg,
+		calendar)
 
-	serverGRPC, err := internalgrpc.NewEventServiceServer(net.JoinHostPort(config.ServerGRPC.Host, config.ServerGRPC.Port), logg, calendar)
+	serverGRPC, err := internalgrpc.NewEventServiceServer(
+		net.JoinHostPort(config.ServerGRPC.Host, config.ServerGRPC.Port),
+		logg,
+		calendar)
 	if err != nil {
-		logg.Error("cant init serviceGRPC:", errors.Wrapf(err, "%s", net.JoinHostPort(config.ServerHTTP.Host, config.ServerHTTP.Port)))
+		logg.Error(
+			"cant init serviceGRPC:",
+			errors.Wrapf(err, "%s", net.JoinHostPort(config.ServerHTTP.Host, config.ServerHTTP.Port)))
 		cancel()
-		os.Exit(1) //nolint:gocritic
+		os.Exit(1)
 	}
 
 	go func() {
