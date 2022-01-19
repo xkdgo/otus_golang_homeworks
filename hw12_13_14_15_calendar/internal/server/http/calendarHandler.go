@@ -188,11 +188,11 @@ func (h *CalendarHandler) handleDeleteEvent(w http.ResponseWriter, r *http.Reque
 func (h *CalendarHandler) handleGetEventsDayWeekMonth(w http.ResponseWriter, r *http.Request, period string) {
 	day, _ := ShiftPath(r.URL.Path)
 	dayTime, err := time.Parse(timelayout, day)
-	ctx := r.Context()
 	if err != nil {
 		httpBadRequest(w, "failed to parse dayTime", err, h.logger)
 		return
 	}
+	ctx := r.Context()
 	userIDValue := ctx.Value(ContextUserKey)
 	userID, ok := userIDValue.(string)
 	if !ok {
