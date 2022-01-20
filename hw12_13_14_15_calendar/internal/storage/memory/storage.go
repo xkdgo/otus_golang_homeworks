@@ -38,8 +38,14 @@ func (s *Storage) CreateEvent(ev storage.Event) (id string, err error) {
 	if ev.ID == "" {
 		ev.ID = utilstorage.GenerateUUID()
 	}
+	if !utilstorage.IsValidUUID(ev.ID) {
+		return "", storage.ErrInvalidEventID
+	}
 	if ev.UserID == "" {
 		return "", storage.ErrEmptyUserIDField
+	}
+	if !utilstorage.IsValidUUID(ev.ID) {
+		return "", storage.ErrInvalidUserID
 	}
 	if _, ok := s.data[ev.ID]; ok {
 		return "", storage.ErrOverlapID

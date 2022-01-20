@@ -8,11 +8,14 @@ import (
 	"github.com/bxcodec/faker/v3"
 	"github.com/stretchr/testify/require"
 	"github.com/xkdgo/otus_golang_homeworks/hw12_13_14_15_calendar/internal/storage"
+	"github.com/xkdgo/otus_golang_homeworks/hw12_13_14_15_calendar/internal/storage/utilstorage"
 )
 
 var (
 	timelayout        = "2006-01-02"
 	timelayoutWithMin = "02 Jan 06 15:04 -0700"
+	userIDFirst       = utilstorage.GenerateUUID()
+	userIDSecond      = utilstorage.GenerateUUID()
 )
 
 func TestStorageGetEvents(t *testing.T) {
@@ -28,7 +31,8 @@ func TestStorageGetEvents(t *testing.T) {
 		for i := 1; i <= daysInJan; i++ {
 			err := faker.FakeData(&testdata)
 			require.NoError(t, err)
-			testdata.UserID = "1"
+			testdata.ID = ""
+			testdata.UserID = userIDFirst
 			testdata.DateTimeStart, err = time.Parse(timelayoutWithMin, fmt.Sprintf("%02d Jan 22 12:15 +0500", i))
 			require.NoError(t, err)
 			testdata.AlarmTime, err = time.Parse(timelayoutWithMin, fmt.Sprintf("%02d Jan 22 12:00 +0500", i))
@@ -43,7 +47,8 @@ func TestStorageGetEvents(t *testing.T) {
 		for i := 1; i <= daysInFeb; i++ {
 			err := faker.FakeData(&testdata)
 			require.NoError(t, err)
-			testdata.UserID = "2"
+			testdata.ID = ""
+			testdata.UserID = userIDSecond
 			testdata.DateTimeStart, err = time.Parse(timelayoutWithMin, fmt.Sprintf("%02d Feb 22 12:15 +0500", i))
 			require.NoError(t, err)
 			testdata.AlarmTime, err = time.Parse(timelayoutWithMin, fmt.Sprintf("%02d Jan 22 12:00 +0500", i))
@@ -56,27 +61,27 @@ func TestStorageGetEvents(t *testing.T) {
 		require.Equal(t, 2, len(memst.userSchedule))
 		testTime, err := time.Parse(timelayout, "2021-01-02")
 		require.NoError(t, err)
-		scheduledEventsForUser, err := memst.ListEventsOnDay("1", testTime)
+		scheduledEventsForUser, err := memst.ListEventsOnDay(userIDFirst, testTime)
 		require.NoError(t, err)
 		require.Equal(t, 0, len(scheduledEventsForUser))
 		testTime, err = time.Parse(timelayout, "2022-01-02")
 		require.NoError(t, err)
-		scheduledEventsForUser, err = memst.ListEventsOnDay("1", testTime)
+		scheduledEventsForUser, err = memst.ListEventsOnDay(userIDFirst, testTime)
 		require.NoError(t, err)
 		require.Equal(t, 1, len(scheduledEventsForUser))
 		testTime, err = time.Parse(timelayout, "2022-01-25")
 		require.NoError(t, err)
-		scheduledEventsForUser, err = memst.ListEventsOnCurrentWeek("1", testTime)
+		scheduledEventsForUser, err = memst.ListEventsOnCurrentWeek(userIDFirst, testTime)
 		require.NoError(t, err)
 		require.Equal(t, 6, len(scheduledEventsForUser))
 		testTime, err = time.Parse(timelayout, "2021-12-27")
 		require.NoError(t, err)
-		scheduledEventsForUser, err = memst.ListEventsOnCurrentWeek("1", testTime)
+		scheduledEventsForUser, err = memst.ListEventsOnCurrentWeek(userIDFirst, testTime)
 		require.NoError(t, err)
 		require.Equal(t, 2, len(scheduledEventsForUser))
 		testTime, err = time.Parse(timelayout, "2022-02-02")
 		require.NoError(t, err)
-		scheduledEventsForUser, err = memst.ListEventsOnCurrentMonth("2", testTime)
+		scheduledEventsForUser, err = memst.ListEventsOnCurrentMonth(userIDSecond, testTime)
 		require.NoError(t, err)
 		require.Equal(t, 27, len(scheduledEventsForUser))
 		_, err = memst.ListEventsOnCurrentMonth("3", testTime)
