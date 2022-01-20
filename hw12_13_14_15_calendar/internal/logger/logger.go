@@ -1,4 +1,4 @@
-//ideas and some code from https://github.com/asim/go-micro/blob/v4.5.0/logger
+// ideas and some code from https://github.com/asim/go-micro/blob/v4.5.0/logger
 package logger
 
 import (
