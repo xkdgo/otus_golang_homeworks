@@ -68,11 +68,6 @@ func GetListener(addr string) (net.Listener, error) {
 }
 
 func NewEventServiceServer(lis net.Listener, logger Logger, app Application) (*Server, error) {
-	// lis, err := net.Listen("tcp", addr)
-	// if err != nil {
-	// 	logger.Error(errors.Wrap(err, ":failed to listen host/port"))
-	// 	return nil, err
-	// }
 	grpcServer := grpc.NewServer()
 	service := &Service{
 		logger: logger,

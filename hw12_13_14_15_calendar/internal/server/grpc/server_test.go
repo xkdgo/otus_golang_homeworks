@@ -6,14 +6,19 @@ import (
 	"net"
 	"testing"
 
+	"github.com/stretchr/testify/require"
 	"github.com/xkdgo/otus_golang_homeworks/hw12_13_14_15_calendar/internal/app"
 	"github.com/xkdgo/otus_golang_homeworks/hw12_13_14_15_calendar/internal/helper"
 	"github.com/xkdgo/otus_golang_homeworks/hw12_13_14_15_calendar/internal/logger"
 	pb "github.com/xkdgo/otus_golang_homeworks/hw12_13_14_15_calendar/internal/server/grpc/proto"
 	"google.golang.org/grpc"
+	codes "google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials/insecure"
+	status "google.golang.org/grpc/status"
 	"google.golang.org/grpc/test/bufconn"
+	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/durationpb"
+	"google.golang.org/protobuf/types/known/emptypb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
@@ -53,32 +58,67 @@ func TestGrpcAPI(t *testing.T) {
 		"bufnet",
 		grpc.WithContextDialer(bufDialer),
 		grpc.WithTransportCredentials(insecure.NewCredentials()))
-	if err != nil {
-		t.Fatalf("Failed to dial bufnet: %v", err)
-	}
+	require.NoError(t, err)
 	defer conn.Close()
 	client := pb.NewEventServiceClient(conn)
+	id := "0fb2cc2e-85c5-41e2-b83e-66e961cf43db"
+	userID := "db46a463-73dc-47cd-ac0e-886b2a99981a"
 	in := &pb.Event{
-		Id:     "0fb2cc2e-85c5-41e2-b83e-66e961cf43db",
+		Id:     id,
 		Title:  "Hello",
-		UserID: "db46a463-73dc-47cd-ac0e-886b2a99981a",
+		UserID: userID,
 		Datetimestart: &timestamppb.Timestamp{
-			Seconds: 20,
+			Seconds: 1643717700,
 			Nanos:   10,
 		},
 		Duration: &durationpb.Duration{
-			Seconds: 20,
+			Seconds: 3600,
 			Nanos:   10,
 		},
 		Alarmtime: &timestamppb.Timestamp{
-			Seconds: 20,
+			Seconds: 1643716800,
 			Nanos:   10,
 		},
 	}
 	resp, err := client.CreateEvent(ctx, in)
-	if err != nil {
-		t.Fatalf("CreateEvent failed: %v", err)
-	}
-	log.Printf("Response: %+v", resp)
-	// Test for output here.
+	require.NoError(t, err)
+	require.Equal(t, id, resp.Id)
+
+	in.Title = "Updated Title"
+	updatedResonse, err := client.UpdateEvent(ctx, in)
+	require.NoError(t, err)
+	require.IsType(t, &emptypb.Empty{}, updatedResonse)
+
+	listEvRequest := &pb.ListEventsRequest{UserID: userID, Datetimestart: "2022-02-01"}
+
+	listresp, err := client.ListEventsDay(ctx, listEvRequest)
+	require.NoError(t, err)
+	require.Len(t, listresp.Events, 1)
+	require.True(t, proto.Equal(in, listresp.Events[0]))
+
+	listresp, err = client.ListEventsWeek(ctx, listEvRequest)
+	require.NoError(t, err)
+	require.Len(t, listresp.Events, 1)
+	require.True(t, proto.Equal(in, listresp.Events[0]))
+
+	listresp, err = client.ListEventsMonth(ctx, listEvRequest)
+	require.NoError(t, err)
+	require.Len(t, listresp.Events, 1)
+	require.True(t, proto.Equal(in, listresp.Events[0]))
+
+	listEvBadRequest := &pb.ListEventsRequest{UserID: userID, Datetimestart: "Invalid Argument"}
+	_, err = client.ListEventsDay(ctx, listEvBadRequest)
+	require.Error(t, err)
+	st, ok := status.FromError(err)
+	require.True(t, ok)
+	require.Equal(t, codes.InvalidArgument, st.Code())
+
+	deleteResonse, err := client.DeleteEvent(ctx, &pb.DeleteEventRequest{Id: in.Id})
+	require.NoError(t, err)
+	require.IsType(t, &emptypb.Empty{}, deleteResonse)
+
+	listresp, err = client.ListEventsMonth(ctx, listEvRequest)
+	require.NoError(t, err)
+	require.Len(t, listresp.Events, 0)
+
 }
