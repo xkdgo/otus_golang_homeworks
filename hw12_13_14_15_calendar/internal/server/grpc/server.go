@@ -76,7 +76,7 @@ func GetListener(addr string) (net.Listener, error) {
 }
 
 func NewEventServiceServer(lis net.Listener, logger Logger, app Application) (*Server, error) {
-	grpcServer := grpc.NewServer()
+	grpcServer := grpc.NewServer(grpc.UnaryInterceptor(InterceptorWithLogger(logger)))
 	service := &Service{
 		logger: logger,
 		app:    app,
@@ -113,6 +113,8 @@ func (s *Service) CreateEvent(ctx context.Context, ev *pb.Event) (res *pb.Create
 		ev.Duration.AsDuration(),
 		ev.Alarmtime.AsTime())
 	if err != nil {
+		st, _ := status.FromError(err)
+		s.logger.Debug(st.Code().String(), st.Err())
 		return nil, status.Errorf(codes.Internal, err.Error())
 	}
 	return &pb.CreateEventResponse{Id: id}, nil
