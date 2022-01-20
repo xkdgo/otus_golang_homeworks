@@ -42,17 +42,16 @@ func (l *zaplog) Init(opts ...logger.Option) error {
 	customTimeFormat = time.RFC3339
 	zapConfig.EncoderConfig.EncodeTime = customTimeEncoder
 
-	log, err := zapConfig.Build(zap.AddCallerSkip(l.opts.CallerSkipCount))
-	if err != nil {
-		return err
-	}
-
 	// Set log Level if not default
 	zapConfig.Level = zap.NewAtomicLevel()
 	if l.opts.Level != logger.InfoLevel {
 		zapConfig.Level.SetLevel(loggerToZapLevel(l.opts.Level))
 	}
-
+	// build after set level
+	log, err := zapConfig.Build(zap.AddCallerSkip(l.opts.CallerSkipCount))
+	if err != nil {
+		return err
+	}
 	// Adding seed fields if exist
 	if l.opts.Fields != nil {
 		data := []zap.Field{}
@@ -92,7 +91,6 @@ func (l *zaplog) Log(level logger.Level, args ...interface{}) {
 		data = append(data, zap.Any(k, v))
 	}
 	l.RUnlock()
-
 	lvl := loggerToZapLevel(level)
 	msg := fmt.Sprint(args...)
 	switch lvl {
@@ -120,7 +118,6 @@ func (l *zaplog) Logf(level logger.Level, format string, args ...interface{}) {
 		data = append(data, zap.Any(k, v))
 	}
 	l.RUnlock()
-
 	lvl := loggerToZapLevel(level)
 	msg := fmt.Sprintf(format, args...)
 	switch lvl {
