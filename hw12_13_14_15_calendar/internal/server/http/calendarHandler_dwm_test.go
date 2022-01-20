@@ -15,12 +15,15 @@ import (
 	"github.com/xkdgo/otus_golang_homeworks/hw12_13_14_15_calendar/internal/helper"
 	"github.com/xkdgo/otus_golang_homeworks/hw12_13_14_15_calendar/internal/logger"
 	"github.com/xkdgo/otus_golang_homeworks/hw12_13_14_15_calendar/internal/server/http/internal/models"
+	"github.com/xkdgo/otus_golang_homeworks/hw12_13_14_15_calendar/plugins/logger/zap"
 )
 
 func TestCalendarDayWeekMonthHandler(t *testing.T) {
 	storage, err := helper.InitStorage("in-memory", "")
 	require.NoError(t, err)
-	logg := logger.New("DEBUG")
+	pluginlogger, err := zap.NewLogger()
+	require.NoError(t, err)
+	logg := logger.New("DEBUG", pluginlogger)
 	app := app.New(logg, storage)
 	handler := NewCalendarHandler(app, logg)
 	var buf bytes.Buffer

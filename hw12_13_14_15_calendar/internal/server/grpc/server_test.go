@@ -11,6 +11,7 @@ import (
 	"github.com/xkdgo/otus_golang_homeworks/hw12_13_14_15_calendar/internal/helper"
 	"github.com/xkdgo/otus_golang_homeworks/hw12_13_14_15_calendar/internal/logger"
 	pb "github.com/xkdgo/otus_golang_homeworks/hw12_13_14_15_calendar/internal/server/grpc/proto"
+	"github.com/xkdgo/otus_golang_homeworks/hw12_13_14_15_calendar/plugins/logger/zap"
 	"google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials/insecure"
@@ -27,7 +28,11 @@ const bufSize = 1024 * 1024
 var lis *bufconn.Listener
 
 func init() {
-	logg := logger.New("DEBUG")
+	pluginlogger, err := zap.NewLogger()
+	if err != nil {
+		return
+	}
+	logg := logger.New("DEBUG", pluginlogger)
 	lis = bufconn.Listen(bufSize)
 	storage, err := helper.InitStorage("in-memory", "")
 	if err != nil {
@@ -120,5 +125,4 @@ func TestGrpcAPI(t *testing.T) {
 	listresp, err = client.ListEventsMonth(ctx, listEvRequest)
 	require.NoError(t, err)
 	require.Len(t, listresp.Events, 0)
-
 }

@@ -14,6 +14,7 @@ import (
 	"github.com/xkdgo/otus_golang_homeworks/hw12_13_14_15_calendar/internal/app"
 	"github.com/xkdgo/otus_golang_homeworks/hw12_13_14_15_calendar/internal/helper"
 	"github.com/xkdgo/otus_golang_homeworks/hw12_13_14_15_calendar/internal/logger"
+	"github.com/xkdgo/otus_golang_homeworks/hw12_13_14_15_calendar/plugins/logger/zap"
 )
 
 const (
@@ -24,7 +25,9 @@ const (
 func TestCalendarHandler(t *testing.T) { //nolint:funlen
 	storage, err := helper.InitStorage("in-memory", "")
 	require.NoError(t, err)
-	logg := logger.New("DEBUG")
+	pluginlogger, err := zap.NewLogger()
+	require.NoError(t, err)
+	logg := logger.New("DEBUG", pluginlogger)
 	app := app.New(logg, storage)
 	handler := NewCalendarHandler(app, logg)
 	type args struct {

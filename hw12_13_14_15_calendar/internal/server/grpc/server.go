@@ -22,11 +22,19 @@ const (
 	timelayout = "2006-01-02"
 )
 
-type Logger interface { // TODO
-	Log(msg ...interface{})
-	Info(msg ...interface{})
-	Infof(format string, msg ...interface{})
-	Error(msg ...interface{})
+type Logger interface {
+	Info(args ...interface{})
+	Infof(template string, args ...interface{})
+	Trace(args ...interface{})
+	Tracef(template string, args ...interface{})
+	Debug(args ...interface{})
+	Debugf(template string, args ...interface{})
+	Warn(args ...interface{})
+	Warnf(template string, args ...interface{})
+	Error(args ...interface{})
+	Errorf(template string, args ...interface{})
+	Fatal(args ...interface{})
+	Fatalf(template string, args ...interface{})
 }
 
 type Application interface {

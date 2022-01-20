@@ -15,11 +15,17 @@ import (
 	"github.com/xkdgo/otus_golang_homeworks/hw12_13_14_15_calendar/internal/logger"
 	internalgrpc "github.com/xkdgo/otus_golang_homeworks/hw12_13_14_15_calendar/internal/server/grpc"
 	internalhttp "github.com/xkdgo/otus_golang_homeworks/hw12_13_14_15_calendar/internal/server/http"
+	"github.com/xkdgo/otus_golang_homeworks/hw12_13_14_15_calendar/plugins/logger/zap"
 )
 
 func RunApp(config Config) {
 	exitCh := make(chan struct{})
-	logg := logger.New(config.Logger.Level)
+	pluginlogger, err := zap.NewLogger()
+	if err != nil {
+		fmt.Println("Cant initialize zap logger")
+		os.Exit(1)
+	}
+	logg := logger.New(config.Logger.Level, pluginlogger)
 
 	ctx, cancel := signal.NotifyContext(context.Background(),
 		os.Interrupt, syscall.SIGTERM, syscall.SIGHUP)
