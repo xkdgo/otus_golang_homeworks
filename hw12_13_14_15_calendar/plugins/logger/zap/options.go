@@ -36,3 +36,9 @@ type optionsKey struct{}
 func WithOptions(opts ...zap.Option) logger.Option {
 	return logger.SetOption(optionsKey{}, opts)
 }
+
+type writerKey struct{}
+
+func WithFile(filename string) logger.Option {
+	return logger.SetOption(writerKey{}, filename)
+}

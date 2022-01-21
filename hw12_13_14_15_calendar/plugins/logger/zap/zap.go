@@ -38,6 +38,23 @@ func (l *zaplog) Init(opts ...logger.Option) error {
 	if zcconfig, ok := l.opts.Context.Value(encoderConfigKey{}).(zapcore.EncoderConfig); ok {
 		zapConfig.EncoderConfig = zcconfig
 	}
+	if fd, ok := l.opts.Out.(*os.File); ok {
+		switch fd.Name() {
+		case "/dev/stdout":
+			zapConfig.OutputPaths = []string{"stdout"}
+			zapConfig.ErrorOutputPaths = []string{"stdout"}
+		case "/dev/stderr":
+			zapConfig.OutputPaths = []string{"stderr"}
+			zapConfig.ErrorOutputPaths = []string{"stderr"}
+		default:
+			zapConfig.OutputPaths = []string{fd.Name()}
+		}
+	}
+
+	if zcconfig, ok := l.opts.Context.Value(writerKey{}).(string); ok {
+		zapConfig.OutputPaths = append(zapConfig.OutputPaths, zcconfig)
+		zapConfig.ErrorOutputPaths = append(zapConfig.OutputPaths, zcconfig)
+	}
 
 	customTimeFormat = time.RFC3339
 	zapConfig.EncoderConfig.EncodeTime = customTimeEncoder
@@ -168,11 +185,10 @@ func NewLogger(opts ...logger.Option) (logger.PluggedLogger, error) {
 	options := logger.Options{
 		Level:           logger.InfoLevel,
 		Fields:          make(map[string]interface{}),
-		Out:             os.Stderr,
+		Out:             os.Stdout,
 		Context:         context.Background(),
 		CallerSkipCount: 2,
 	}
-
 	l := &zaplog{opts: options}
 	if err := l.Init(opts...); err != nil {
 		return nil, err
