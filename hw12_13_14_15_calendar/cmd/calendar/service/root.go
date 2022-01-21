@@ -82,7 +82,12 @@ func init() {
 	viper.BindPFlag("config", rootCmd.Flags().Lookup("config"))
 
 	rootCmd.AddCommand(cmdVersion)
-	migrateCmd.Flags().StringVarP(&migrations.CfgFile, "config", "c", "/etc/calendar/config.toml", "Path to configuration file")
+	migrateCmd.Flags().StringVarP(
+		&migrations.CfgFile,
+		"config",
+		"c",
+		"/etc/calendar/config.toml",
+		"Path to configuration file")
 	viper.BindPFlag("config", migrateCmd.Flags().Lookup("config"))
 	rootCmd.AddCommand(migrateCmd)
 }
