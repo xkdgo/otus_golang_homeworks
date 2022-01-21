@@ -20,97 +20,97 @@ func TestLogger(t *testing.T) {
 	pluginlogger, err := NewLogger(WithFile(toPath))
 	require.NoErrorf(t, err, "Cant initialize zap logger")
 	t.Run("Test DEBUG level", func(t *testing.T) {
-		logger := logger.New("DEBUG", pluginlogger)
+		logg := logger.New("DEBUG", pluginlogger)
 
 		fd, err := os.Open(toPath)
 		require.NoError(t, err)
 		scanner := bufio.NewScanner(fd)
 
-		logger.Debug("Debug message")
+		logg.Debug("Debug message")
 		scanner.Scan()
 		require.True(t, strings.Contains(scanner.Text(), "Debug message"))
 
-		logger.Debugf("Debug message %s", "test")
+		logg.Debugf("Debug message %s", "test")
 		scanner.Scan()
 		require.True(t, strings.Contains(scanner.Text(), "Debug message test"))
 
-		logger.Info("Info message")
+		logg.Info("Info message")
 		scanner.Scan()
 		require.True(t, strings.Contains(scanner.Text(), "Info message"))
 
-		logger.Infof("Info message %s", "test")
+		logg.Infof("Info message %s", "test")
 		scanner.Scan()
 		require.True(t, strings.Contains(scanner.Text(), "Info message test"))
 
-		logger.Error("Error message")
+		logg.Error("Error message")
 		scanner.Scan()
 		require.True(t, strings.Contains(scanner.Text(), "Error message"))
 
-		logger.Errorf("Error message %s", "test")
+		logg.Errorf("Error message %s", "test")
 		scanner.Scan()
 		require.True(t, strings.Contains(scanner.Text(), "Error message test"))
 	})
 
 	t.Run("Test ERROR level", func(t *testing.T) {
-		logger := logger.New("ERROR", pluginlogger)
+		logg := logger.New("ERROR", pluginlogger)
 
 		fd, err := os.Open(toPath)
 		require.NoError(t, err)
 		scanner := bufio.NewScanner(fd)
 
-		logger.Debug("Debug message")
+		logg.Debug("Debug message")
 		scanner.Scan()
 		require.True(t, strings.Contains(scanner.Text(), ""))
 
-		logger.Debugf("Debug message %s", "test")
+		logg.Debugf("Debug message %s", "test")
 		scanner.Scan()
 		require.True(t, strings.Contains(scanner.Text(), ""))
 
-		logger.Info("Info message")
+		logg.Info("Info message")
 		scanner.Scan()
 		require.True(t, strings.Contains(scanner.Text(), ""))
 
-		logger.Infof("Info message %s", "test")
+		logg.Infof("Info message %s", "test")
 		scanner.Scan()
 		require.True(t, strings.Contains(scanner.Text(), ""))
 
-		logger.Error("Error message")
+		logg.Error("Error message")
 		scanner.Scan()
 		require.True(t, strings.Contains(scanner.Text(), "Error message"))
 
-		logger.Errorf("Error message %s", "test")
+		logg.Errorf("Error message %s", "test")
 		scanner.Scan()
 		require.True(t, strings.Contains(scanner.Text(), "Error message test"))
 	})
 
 	t.Run("Test INFO level", func(t *testing.T) {
-		logger := logger.New("INFO", pluginlogger)
+		logg := logger.New("INFO", pluginlogger)
 
 		fd, err := os.Open(toPath)
 		require.NoError(t, err)
 		scanner := bufio.NewScanner(fd)
 
-		logger.Debug("Debug message")
+		logg.Debug("Debug message")
 		scanner.Scan()
 		require.True(t, strings.Contains(scanner.Text(), ""))
 
-		logger.Debugf("Debug message %s", "test")
+		logg.Debugf("Debug message %s", "test")
 		scanner.Scan()
 		require.True(t, strings.Contains(scanner.Text(), ""))
 
-		logger.Info("Info message")
+		logg.Info("Info message")
 		scanner.Scan()
 		require.True(t, strings.Contains(scanner.Text(), "Info message"))
 
-		logger.Infof("Info message %s", "test")
+		logg.Infof("Info message %s", "test")
 		scanner.Scan()
 		require.True(t, strings.Contains(scanner.Text(), "Info message test"))
 
-		logger.Error("Error message")
+		logg.Error("Error message")
 		scanner.Scan()
 		require.True(t, strings.Contains(scanner.Text(), "Error message"))
 
-		logger.Errorf("Error message %s", "test")
+		logg.Errorf("Error message %s", "test")
 		scanner.Scan()
 		require.True(t, strings.Contains(scanner.Text(), "Error message test"))
 	})
