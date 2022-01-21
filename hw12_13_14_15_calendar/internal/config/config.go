@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/spf13/viper"
 )
@@ -40,6 +41,10 @@ func NewConfig(cfgFile string) (Config, error) {
 	if err := viper.ReadInConfig(); err != nil {
 		return Config{}, fmt.Errorf("failed to read config: %w", err)
 	}
+	viper.SetEnvPrefix("calendar")
+	replacer := strings.NewReplacer(".", "_")
+	viper.SetEnvKeyReplacer(replacer)
+	viper.AutomaticEnv()
 	err := viper.Unmarshal(&config)
 	if err != nil {
 		return Config{}, fmt.Errorf("unable to decode into struct, %w", err)
