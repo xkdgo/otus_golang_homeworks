@@ -1,8 +1,8 @@
 package main
 
-import "github.com/xkdgo/otus_golang_homeworks/hw12_13_14_15_calendar/cmd/calendar/cmd"
+import "github.com/xkdgo/otus_golang_homeworks/hw12_13_14_15_calendar/cmd/calendar/service"
 
 func main() {
 	transferVersionToCalendar()
-	cmd.Execute()
+	service.Execute()
 }

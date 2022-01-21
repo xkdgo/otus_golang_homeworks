@@ -1,4 +1,4 @@
-package cmd
+package service
 
 import (
 	"context"
@@ -11,6 +11,7 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/xkdgo/otus_golang_homeworks/hw12_13_14_15_calendar/internal/app"
+	"github.com/xkdgo/otus_golang_homeworks/hw12_13_14_15_calendar/internal/config"
 	"github.com/xkdgo/otus_golang_homeworks/hw12_13_14_15_calendar/internal/helper"
 	"github.com/xkdgo/otus_golang_homeworks/hw12_13_14_15_calendar/internal/logger"
 	internalgrpc "github.com/xkdgo/otus_golang_homeworks/hw12_13_14_15_calendar/internal/server/grpc"
@@ -18,7 +19,7 @@ import (
 	"github.com/xkdgo/otus_golang_homeworks/hw12_13_14_15_calendar/plugins/logger/zap"
 )
 
-func RunApp(config Config) {
+func RunApp(config config.Config) {
 	exitCh := make(chan struct{})
 	pluginlogger, err := zap.NewLogger()
 	if err != nil {
