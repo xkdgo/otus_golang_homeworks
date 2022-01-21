@@ -33,7 +33,7 @@ type StorageConf struct {
 	DSN  string `mapstructure:"dsn"`
 }
 
-func NewConfig(cfgFile string) (Config, error) {
+func NewConfig(cfgFile string, serviceName string) (Config, error) {
 	viper.SetDefault("server.port", defaultServerPort)
 	viper.SetDefault("db.type", defaultStorageType)
 	var config Config
@@ -41,7 +41,7 @@ func NewConfig(cfgFile string) (Config, error) {
 	if err := viper.ReadInConfig(); err != nil {
 		return Config{}, fmt.Errorf("failed to read config: %w", err)
 	}
-	viper.SetEnvPrefix("calendar")
+	viper.SetEnvPrefix(serviceName)
 	replacer := strings.NewReplacer(".", "_")
 	viper.SetEnvKeyReplacer(replacer)
 	viper.AutomaticEnv()

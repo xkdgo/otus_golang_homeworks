@@ -11,6 +11,8 @@ import (
 	"github.com/xkdgo/otus_golang_homeworks/hw12_13_14_15_calendar/internal/config"
 )
 
+const serviceName = "calendar"
+
 // rootCmd represents the base command when called without any subcommands.
 var (
 	CfgFile   string
@@ -24,7 +26,7 @@ var (
 it can use several storages
 all configurations you can find in config file example`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			config, err := config.NewConfig(CfgFile)
+			config, err := config.NewConfig(CfgFile, serviceName)
 			if err != nil {
 				return err
 			}

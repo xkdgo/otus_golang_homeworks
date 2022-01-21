@@ -11,11 +11,13 @@ import (
 	"github.com/xkdgo/otus_golang_homeworks/hw12_13_14_15_calendar/internal/config"
 )
 
+const serviceName = "calendar"
+
 var CfgFile string
 
 func Migrate(cmd *cobra.Command, args []string) error {
 	fmt.Println("running migrate ...")
-	conf, err := config.NewConfig(CfgFile)
+	conf, err := config.NewConfig(CfgFile, serviceName)
 	if err != nil {
 		return err
 	}
