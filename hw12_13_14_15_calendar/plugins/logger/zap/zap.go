@@ -53,7 +53,7 @@ func (l *zaplog) Init(opts ...logger.Option) error {
 
 	if zcconfig, ok := l.opts.Context.Value(writerKey{}).(string); ok {
 		zapConfig.OutputPaths = append(zapConfig.OutputPaths, zcconfig)
-		zapConfig.ErrorOutputPaths = append(zapConfig.OutputPaths, zcconfig)
+		zapConfig.ErrorOutputPaths = append(zapConfig.ErrorOutputPaths, zcconfig)
 	}
 
 	customTimeFormat = time.RFC3339

@@ -114,5 +114,4 @@ func TestLogger(t *testing.T) {
 		scanner.Scan()
 		require.True(t, strings.Contains(scanner.Text(), "Error message test"))
 	})
-
 }
