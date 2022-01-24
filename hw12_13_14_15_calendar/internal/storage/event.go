@@ -8,7 +8,7 @@ type Event struct {
 	UserID        string
 	DateTimeStart time.Time
 	Duration      time.Duration
-	AlarmTime     time.Duration
+	AlarmTime     time.Time
 }
 
 func NewEvent(
@@ -16,7 +16,7 @@ func NewEvent(
 	description string,
 	start time.Time,
 	duration time.Duration,
-	alarm time.Duration) (Event, error) {
+	alarm time.Time) (Event, error) {
 	switch {
 	case title == "":
 		return Event{}, ErrTitle

@@ -4,3 +4,7 @@ level = "DEBUG"
 [server]
 host = ""
 port = "8080"
+
+[grpc]
+host = ""
+port = "9090"

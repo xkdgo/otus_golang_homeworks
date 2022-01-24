@@ -8,6 +8,7 @@ import (
 	"github.com/bxcodec/faker/v3"
 	"github.com/stretchr/testify/require"
 	"github.com/xkdgo/otus_golang_homeworks/hw12_13_14_15_calendar/internal/storage"
+	"github.com/xkdgo/otus_golang_homeworks/hw12_13_14_15_calendar/internal/storage/utilstorage"
 )
 
 func TestStorage(t *testing.T) {
@@ -16,6 +17,8 @@ func TestStorage(t *testing.T) {
 	t.Run("test create event", func(t *testing.T) {
 		require.Equal(t, 0, len(memstorage.data))
 		err := faker.FakeData(&testdata)
+		testdata.ID = ""
+		testdata.UserID = userIDFirst
 		require.NoError(t, err)
 		_, err = memstorage.CreateEvent(testdata)
 		require.NoError(t, err)
@@ -26,6 +29,8 @@ func TestStorage(t *testing.T) {
 
 		err = faker.FakeData(&testdata)
 		require.NoError(t, err)
+		testdata.ID = ""
+		testdata.UserID = userIDSecond
 		_, err = memstorage.CreateEvent(testdata)
 		require.NoError(t, err)
 		require.Equal(t, 2, len(memstorage.data))
@@ -71,6 +76,8 @@ func TestStorageConcurency(t *testing.T) { //nolint:gocognit
 		for i := 0; i < testDataLen; i++ {
 			err := faker.FakeData(&testdata)
 			require.NoError(t, err)
+			testdata.ID = utilstorage.GenerateUUID()
+			testdata.UserID = utilstorage.GenerateUUID()
 			testDataSlice = append(testDataSlice, testdata)
 		}
 		for i := 0; i < workersCount; i++ {

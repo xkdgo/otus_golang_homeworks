@@ -81,15 +81,21 @@ func (s *Storage) CreateEvent(ev storage.Event) (id string, err error) {
 		fmt.Println(err)
 		return "", err
 	}
-	return id, nil
+	return ev.ID, nil
 }
 
 func (s *Storage) UpdateEvent(id string, event storage.Event) error {
+	if id == "" {
+		return storage.ErrEventIDNotFound
+	}
 	if event.ID == "" {
 		event.ID = id
 	}
 	if id != event.ID {
 		return storage.ErrMismatchedID
+	}
+	if err := s.checkEventIDisPresent(id); err != nil {
+		return err
 	}
 	dbConvertedEvent, err := convertToDBEvent(event)
 	if err != nil {
@@ -241,6 +247,26 @@ func (s *Storage) checkUserIDisPresent(userID string) error {
 	return nil
 }
 
+func (s *Storage) checkEventIDisPresent(eventID string) error {
+	rows, err := s.db.Query(`SELECT COUNT(*) AS eventcount
+                             FROM public.events
+                             WHERE id = $1`, eventID)
+	if err != nil {
+		return errors.Wrap(err, ": while query userid count")
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var eventcount int64
+		if err := rows.Scan(&eventcount); err != nil {
+			return errors.Wrap(err, ": while query eventcount")
+		}
+		if eventcount == 0 {
+			return storage.ErrEventIDNotFound
+		}
+	}
+	return nil
+}
+
 func convertToDBEvent(ev storage.Event) (pgEvent, error) {
 	dbEvent := pgEvent{}
 	if ev.ID == "" {
@@ -254,7 +280,7 @@ func convertToDBEvent(ev storage.Event) (pgEvent, error) {
 	dbEvent.Userid = ev.UserID
 	dbEvent.Datetimestart = ev.DateTimeStart
 	dbEvent.Tilldate = ev.DateTimeStart.Add(ev.Duration)
-	dbEvent.Alarmdatetime = ev.DateTimeStart.Add(-1 * ev.Duration)
+	dbEvent.Alarmdatetime = ev.AlarmTime
 	return dbEvent, nil
 }
 
@@ -266,7 +292,7 @@ func convertToStorageEvent(pgEv pgEvent) storage.Event {
 	storageEvent.UserID = pgEv.Userid
 	storageEvent.DateTimeStart = pgEv.Datetimestart
 	storageEvent.Duration = pgEv.Tilldate.Sub(pgEv.Datetimestart)
-	storageEvent.AlarmTime = pgEv.Datetimestart.Sub(pgEv.Alarmdatetime)
+	storageEvent.AlarmTime = pgEv.Alarmdatetime
 	return storageEvent
 }
 

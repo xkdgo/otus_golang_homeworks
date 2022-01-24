@@ -1,7 +1,8 @@
-package cmd
+package config
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/spf13/viper"
 )
@@ -12,9 +13,10 @@ var (
 )
 
 type Config struct {
-	Logger  LoggerConf  `mapstructure:"logger"`
-	Server  ServerConf  `mapstructure:"server"`
-	Storage StorageConf `mapstructure:"db"`
+	Logger     LoggerConf  `mapstructure:"logger"`
+	ServerHTTP ServerConf  `mapstructure:"server"`
+	ServerGRPC ServerConf  `mapstructure:"grpc"`
+	Storage    StorageConf `mapstructure:"db"`
 }
 
 type LoggerConf struct {
@@ -31,7 +33,7 @@ type StorageConf struct {
 	DSN  string `mapstructure:"dsn"`
 }
 
-func NewConfig(cfgFile string) (Config, error) {
+func NewConfig(cfgFile string, serviceName string) (Config, error) {
 	viper.SetDefault("server.port", defaultServerPort)
 	viper.SetDefault("db.type", defaultStorageType)
 	var config Config
@@ -39,6 +41,10 @@ func NewConfig(cfgFile string) (Config, error) {
 	if err := viper.ReadInConfig(); err != nil {
 		return Config{}, fmt.Errorf("failed to read config: %w", err)
 	}
+	viper.SetEnvPrefix(serviceName)
+	replacer := strings.NewReplacer(".", "_")
+	viper.SetEnvKeyReplacer(replacer)
+	viper.AutomaticEnv()
 	err := viper.Unmarshal(&config)
 	if err != nil {
 		return Config{}, fmt.Errorf("unable to decode into struct, %w", err)

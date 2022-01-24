@@ -6,28 +6,48 @@ import (
 	"fmt"
 	"net/http"
 	"time"
+
+	"github.com/xkdgo/otus_golang_homeworks/hw12_13_14_15_calendar/internal/storage"
 )
 
-type Server struct { // TODO
+type Server struct {
 	logger Logger
 	app    Application
 	router *http.Server
 	addr   string
 }
 
-type Logger interface { // TODO
-	Log(msg ...interface{})
-	Info(msg ...interface{})
-	Infof(format string, msg ...interface{})
-	Error(msg ...interface{})
+type Logger interface {
+	Info(args ...interface{})
+	Infof(template string, args ...interface{})
+	Trace(args ...interface{})
+	Tracef(template string, args ...interface{})
+	Debug(args ...interface{})
+	Debugf(template string, args ...interface{})
+	Warn(args ...interface{})
+	Warnf(template string, args ...interface{})
+	Error(args ...interface{})
+	Errorf(template string, args ...interface{})
+	Fatal(args ...interface{})
+	Fatalf(template string, args ...interface{})
 }
 
 type Application interface {
 	CreateEvent(ctx context.Context,
 		id, title, userID string,
 		DateTimeStart time.Time,
-		Duration, AlarmTime time.Duration) (createdID string, err error)
+		Duration time.Duration,
+		AlarmTime time.Time) (createdID string, err error)
+	UpdateEvent(ctx context.Context,
+		id, title, userID string,
+		dateTimeStart time.Time,
+		duration time.Duration,
+		alarmTime time.Time) (err error)
 	DeleteEvent(ctx context.Context, id string) error
+	ListEventsDay(ctx context.Context, userID string, dateTime time.Time) (events []storage.Event, err error)
+	ListEventsWeek(ctx context.Context, userID string, dateTime time.Time) (events []storage.Event, err error)
+	ListEventsMonth(ctx context.Context, userID string, dateTime time.Time) (events []storage.Event, err error)
+	GetStorage() storage.Storage
 }
 
 func NewServer(addr string, logger Logger, app Application) *Server {
@@ -39,16 +59,13 @@ func NewServer(addr string, logger Logger, app Application) *Server {
 }
 
 func (s *Server) Start(ctx context.Context) error {
-	// mux := http.NewServeMux()
-	handler := NewHandler(s.app, s.logger, http.NewServeMux())
-	// mux.Handle("/", s.loggingMiddleware(http.HandlerFunc(HelloServer)))
-	// mux.Handle("/create", s.loggingMiddleware(http.HandlerFunc(handler.CreateEvent)))
+	handler := NewRootHandler(s.app, s.logger)
 	s.router = &http.Server{
 		Addr:    s.addr,
-		Handler: s.loggingMiddleware(handler),
+		Handler: s.loggingMiddleware(s.authMiddleware(handler)),
 	}
 
-	s.logger.Infof("server started on port %s", s.router.Addr)
+	s.logger.Infof("http server started on port %s", s.router.Addr)
 	err := s.router.ListenAndServe()
 	if errors.Is(err, http.ErrServerClosed) {
 		return nil
