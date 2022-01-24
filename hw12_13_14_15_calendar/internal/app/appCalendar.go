@@ -7,7 +7,7 @@ import (
 	"github.com/xkdgo/otus_golang_homeworks/hw12_13_14_15_calendar/internal/storage"
 )
 
-type App struct {
+type AppCalendar struct {
 	Logger  Logger
 	storage storage.Storage
 }
@@ -27,15 +27,15 @@ type Logger interface {
 	Fatalf(template string, args ...interface{})
 }
 
-func New(logger Logger, storage storage.Storage) *App {
-	return &App{Logger: logger, storage: storage}
+func NewAppCalendar(logger Logger, storage storage.Storage) *AppCalendar {
+	return &AppCalendar{Logger: logger, storage: storage}
 }
 
-func (a *App) GetStorage() storage.Storage {
+func (a *AppCalendar) GetStorage() storage.Storage {
 	return a.storage
 }
 
-func (a *App) CreateEvent(ctx context.Context,
+func (a *AppCalendar) CreateEvent(ctx context.Context,
 	id, title, userID string,
 	dateTimeStart time.Time,
 	duration time.Duration,
@@ -50,7 +50,7 @@ func (a *App) CreateEvent(ctx context.Context,
 	})
 }
 
-func (a *App) UpdateEvent(ctx context.Context,
+func (a *AppCalendar) UpdateEvent(ctx context.Context,
 	id, title, userID string,
 	dateTimeStart time.Time,
 	duration time.Duration,
@@ -65,25 +65,25 @@ func (a *App) UpdateEvent(ctx context.Context,
 	})
 }
 
-func (a *App) DeleteEvent(ctx context.Context, id string) error {
+func (a *AppCalendar) DeleteEvent(ctx context.Context, id string) error {
 	return a.storage.DeleteEvent(id)
 }
 
-func (a *App) ListEventsDay(
+func (a *AppCalendar) ListEventsDay(
 	ctx context.Context,
 	userID string,
 	dateTime time.Time) (events []storage.Event, err error) {
 	return a.storage.ListEventsOnDay(userID, dateTime)
 }
 
-func (a *App) ListEventsWeek(
+func (a *AppCalendar) ListEventsWeek(
 	ctx context.Context,
 	userID string,
 	dateTime time.Time) (events []storage.Event, err error) {
 	return a.storage.ListEventsOnCurrentWeek(userID, dateTime)
 }
 
-func (a *App) ListEventsMonth(
+func (a *AppCalendar) ListEventsMonth(
 	ctx context.Context,
 	userID string,
 	dateTime time.Time) (events []storage.Event, err error) {

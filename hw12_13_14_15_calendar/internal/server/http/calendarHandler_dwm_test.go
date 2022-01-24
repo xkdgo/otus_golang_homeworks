@@ -24,7 +24,7 @@ func TestCalendarDayWeekMonthHandler(t *testing.T) {
 	pluginlogger, err := zap.NewLogger()
 	require.NoError(t, err)
 	logg := logger.New("DEBUG", pluginlogger)
-	app := app.New(logg, storage)
+	app := app.NewAppCalendar(logg, storage)
 	handler := NewCalendarHandler(app, logg)
 	var buf bytes.Buffer
 	const (

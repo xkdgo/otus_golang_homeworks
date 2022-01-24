@@ -38,7 +38,7 @@ func init() {
 	if err != nil {
 		return
 	}
-	calendar := app.New(logg, storage)
+	calendar := app.NewAppCalendar(logg, storage)
 	s, err := NewEventServiceServer(lis,
 		logg,
 		calendar)

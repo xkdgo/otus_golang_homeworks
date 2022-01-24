@@ -39,7 +39,7 @@ func RunApp(config config.Config) {
 		os.Exit(1) //nolint:gocritic
 	}
 	defer storage.Close()
-	calendar := app.New(logg, storage)
+	calendar := app.NewAppCalendar(logg, storage)
 
 	serverHTTP := internalhttp.NewServer(
 		net.JoinHostPort(config.ServerHTTP.Host, config.ServerHTTP.Port),
