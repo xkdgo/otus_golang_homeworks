@@ -149,3 +149,15 @@ func (s *Storage) ListEventsByDuration(
 	}
 	return events, nil
 }
+
+func (s *Storage) ListEventsToNotify(periodTimeStart time.Time, periodTimeEnd time.Time) (events []storage.Event, err error) {
+	for _, ev := range s.data {
+		switch {
+		case ev.AlarmTime.Truncate(time.Second) == periodTimeStart:
+			events = append(events, *ev)
+		case ev.AlarmTime.After(periodTimeStart) && ev.AlarmTime.Before(periodTimeEnd):
+			events = append(events, *ev)
+		}
+	}
+	return events, nil
+}

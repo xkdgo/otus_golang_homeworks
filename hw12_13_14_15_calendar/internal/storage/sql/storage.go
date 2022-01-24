@@ -267,6 +267,52 @@ func (s *Storage) checkEventIDisPresent(eventID string) error {
 	return nil
 }
 
+func (s *Storage) ListEventsToNotify(periodTimeStart time.Time, periodTimeEnd time.Time) (events []storage.Event, err error) {
+	fmt.Println("Query between ", periodTimeStart, "and ", periodTimeEnd)
+	rows, err := s.db.Query(`SELECT	
+	id, title, userid, datetimestart, tilldate, alarmdatetime
+	FROM public.events 
+	WHERE 
+	(
+		alarmdatetime BETWEEN  $1 and $2
+	)`, periodTimeStart, periodTimeEnd)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var (
+			id            string
+			title         string
+			userid        string
+			datetimestart time.Time
+			tilldate      time.Time
+			alarmdatetime time.Time
+		)
+		if err := rows.Scan(
+			&id, &title, &userid,
+			&datetimestart, &tilldate, &alarmdatetime); err != nil {
+			if err != nil {
+				return nil, errors.Wrap(err, ": rows next error listeventstonotify")
+			}
+		}
+		events = append(events,
+			convertToStorageEvent(pgEvent{
+				ID:            id,
+				Title:         title,
+				Userid:        userid,
+				Datetimestart: datetimestart,
+				Tilldate:      tilldate,
+				Alarmdatetime: alarmdatetime,
+			}))
+	}
+	if err := rows.Err(); err != nil {
+		return nil, errors.Wrap(err, ": rows read error listeventstonotify")
+	}
+	return events, nil
+}
+
 func convertToDBEvent(ev storage.Event) (pgEvent, error) {
 	dbEvent := pgEvent{}
 	if ev.ID == "" {

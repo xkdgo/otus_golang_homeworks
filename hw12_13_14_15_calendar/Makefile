@@ -2,6 +2,7 @@ generate:
 	go generate ./...
 
 BIN := "./bin/calendar"
+BIN_SCH := "./bin/calendar_scheduler"
 DOCKER_IMG="calendar:develop"
 
 GIT_HASH := $(shell git log --format="%h" -n 1)
@@ -9,6 +10,7 @@ LDFLAGS := -X main.release="develop" -X main.buildDate=$(shell date -u +%Y-%m-%d
 
 build:
 	go build -v -o $(BIN) -ldflags "$(LDFLAGS)" ./cmd/calendar
+	go build -v -o $(BIN_SCH) -ldflags "$(LDFLAGS)" ./cmd/calendar_scheduler
 
 run: build
 	$(BIN) -config ./configs/config.toml

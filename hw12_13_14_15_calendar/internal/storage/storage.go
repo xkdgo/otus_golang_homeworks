@@ -10,4 +10,5 @@ type Storage interface {
 	ListEventsOnDay(userID string, dateTime time.Time) (events []Event, err error)
 	ListEventsOnCurrentWeek(userID string, dateTime time.Time) (events []Event, err error)
 	ListEventsOnCurrentMonth(userID string, dateTime time.Time) (events []Event, err error)
+	ListEventsToNotify(periodTimeStart time.Time, periodTimeEnd time.Time) (events []Event, err error)
 }
