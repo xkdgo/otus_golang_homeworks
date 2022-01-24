@@ -26,7 +26,7 @@ var (
 it can use several storages
 all configurations you can find in config file example`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			config, err := config.NewConfig(CfgFile, serviceName)
+			config, err := config.NewCalendarConfig(CfgFile, serviceName)
 			if err != nil {
 				return err
 			}

@@ -17,7 +17,7 @@ var CfgFile string
 
 func Migrate(cmd *cobra.Command, args []string) error {
 	fmt.Println("running migrate ...")
-	conf, err := config.NewConfig(CfgFile, serviceName)
+	conf, err := config.NewCalendarConfig(CfgFile, serviceName)
 	if err != nil {
 		return err
 	}

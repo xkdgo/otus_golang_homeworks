@@ -7,12 +7,7 @@ import (
 	"github.com/spf13/viper"
 )
 
-var (
-	defaultServerPort  = "8080"
-	defaultStorageType = "in-memory"
-)
-
-type Config struct {
+type CalendarConfig struct {
 	Logger     LoggerConf  `mapstructure:"logger"`
 	ServerHTTP ServerConf  `mapstructure:"server"`
 	ServerGRPC ServerConf  `mapstructure:"grpc"`
@@ -33,13 +28,13 @@ type StorageConf struct {
 	DSN  string `mapstructure:"dsn"`
 }
 
-func NewConfig(cfgFile string, serviceName string) (Config, error) {
+func NewCalendarConfig(cfgFile string, serviceName string) (CalendarConfig, error) {
 	viper.SetDefault("server.port", defaultServerPort)
 	viper.SetDefault("db.type", defaultStorageType)
-	var config Config
+	var config CalendarConfig
 	viper.SetConfigFile(cfgFile)
 	if err := viper.ReadInConfig(); err != nil {
-		return Config{}, fmt.Errorf("failed to read config: %w", err)
+		return CalendarConfig{}, fmt.Errorf("failed to read config: %w", err)
 	}
 	viper.SetEnvPrefix(serviceName)
 	replacer := strings.NewReplacer(".", "_")
@@ -47,7 +42,7 @@ func NewConfig(cfgFile string, serviceName string) (Config, error) {
 	viper.AutomaticEnv()
 	err := viper.Unmarshal(&config)
 	if err != nil {
-		return Config{}, fmt.Errorf("unable to decode into struct, %w", err)
+		return CalendarConfig{}, fmt.Errorf("unable to decode into struct, %w", err)
 	}
 	fmt.Printf("%+v\n", config)
 	fmt.Println(viper.AllSettings())

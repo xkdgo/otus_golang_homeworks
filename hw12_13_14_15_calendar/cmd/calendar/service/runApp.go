@@ -19,9 +19,9 @@ import (
 	"github.com/xkdgo/otus_golang_homeworks/hw12_13_14_15_calendar/plugins/logger/zap"
 )
 
-func RunApp(config config.Config) {
+func RunApp(config config.CalendarConfig) {
 	exitCh := make(chan struct{})
-	pluginlogger, err := zap.NewLogger()
+	pluginlogger, err := zap.NewLogger(logger.WithFields(map[string]interface{}{"calendar": ""}))
 	if err != nil {
 		fmt.Println("Cant initialize zap logger")
 		os.Exit(1)
