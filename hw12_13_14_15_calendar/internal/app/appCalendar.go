@@ -7,7 +7,7 @@ import (
 	"github.com/xkdgo/otus_golang_homeworks/hw12_13_14_15_calendar/internal/storage"
 )
 
-type AppCalendar struct {
+type Calendar struct {
 	Logger  Logger
 	storage storage.Storage
 }
@@ -27,15 +27,15 @@ type Logger interface {
 	Fatalf(template string, args ...interface{})
 }
 
-func NewAppCalendar(logger Logger, storage storage.Storage) *AppCalendar {
-	return &AppCalendar{Logger: logger, storage: storage}
+func NewAppCalendar(logger Logger, storage storage.Storage) *Calendar {
+	return &Calendar{Logger: logger, storage: storage}
 }
 
-func (a *AppCalendar) GetStorage() storage.Storage {
+func (a *Calendar) GetStorage() storage.Storage {
 	return a.storage
 }
 
-func (a *AppCalendar) CreateEvent(ctx context.Context,
+func (a *Calendar) CreateEvent(ctx context.Context,
 	id, title, userID string,
 	dateTimeStart time.Time,
 	duration time.Duration,
@@ -50,7 +50,7 @@ func (a *AppCalendar) CreateEvent(ctx context.Context,
 	})
 }
 
-func (a *AppCalendar) UpdateEvent(ctx context.Context,
+func (a *Calendar) UpdateEvent(ctx context.Context,
 	id, title, userID string,
 	dateTimeStart time.Time,
 	duration time.Duration,
@@ -65,25 +65,25 @@ func (a *AppCalendar) UpdateEvent(ctx context.Context,
 	})
 }
 
-func (a *AppCalendar) DeleteEvent(ctx context.Context, id string) error {
+func (a *Calendar) DeleteEvent(ctx context.Context, id string) error {
 	return a.storage.DeleteEvent(id)
 }
 
-func (a *AppCalendar) ListEventsDay(
+func (a *Calendar) ListEventsDay(
 	ctx context.Context,
 	userID string,
 	dateTime time.Time) (events []storage.Event, err error) {
 	return a.storage.ListEventsOnDay(userID, dateTime)
 }
 
-func (a *AppCalendar) ListEventsWeek(
+func (a *Calendar) ListEventsWeek(
 	ctx context.Context,
 	userID string,
 	dateTime time.Time) (events []storage.Event, err error) {
 	return a.storage.ListEventsOnCurrentWeek(userID, dateTime)
 }
 
-func (a *AppCalendar) ListEventsMonth(
+func (a *Calendar) ListEventsMonth(
 	ctx context.Context,
 	userID string,
 	dateTime time.Time) (events []storage.Event, err error) {
