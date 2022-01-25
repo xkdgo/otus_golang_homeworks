@@ -41,20 +41,20 @@ func RunApp(config config.SchedulerConfig) {
 	if err != nil {
 		logg.Error("cant parse scheduler period:", errors.Wrapf(err, "%s", config.Scheduler.TimeoutQuery))
 		cancel()
-		os.Exit(1) //nolint:gocritic
+		os.Exit(1)
 	}
-	if period < time.Duration(1*time.Second) {
+	if period < 1*time.Second {
 		logg.Error("period should be equal or more than 1s", errors.Wrapf(err, "%s", config.Scheduler.TimeoutQuery))
 		cancel()
-		os.Exit(1) //nolint:gocritic
+		os.Exit(1)
 	}
 
-	//TODO make amqp config
+	// TODO make amqp config
 	sender, err := rabbit.NewSender(serviceName, "direct", true, "amqp://guest:guest@localhost:5672/", logg)
 	if err != nil {
 		logg.Error("cant init sender:", errors.Wrapf(err, "%s %s", serviceName, "amqp://guest:guest@localhost:5672/"))
 		cancel()
-		os.Exit(1) //nolint:gocritic
+		os.Exit(1)
 	}
 	defer sender.Stop()
 	scheduler := app.NewAppScheduler(logg, storage, period, sender)

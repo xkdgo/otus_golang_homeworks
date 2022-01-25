@@ -85,8 +85,7 @@ func (s *Sender) ChannelClose() error {
 }
 
 func (s *Sender) Stop() error {
-	err := s.ChannelClose()
-	if err != nil {
+	if err := s.ChannelClose(); err != nil {
 		s.log.Errorf("unable close channel", err)
 	}
 	if s.connection == nil {
@@ -115,8 +114,7 @@ func NewSender(exchangeName, typ string, durable bool, dialString string, logg *
 		connection: nil,
 		channel:    nil,
 	}
-	err := s.Init()
-	if err != nil {
+	if err := s.Init(); err != nil {
 		return nil, err
 	}
 	return s, nil
