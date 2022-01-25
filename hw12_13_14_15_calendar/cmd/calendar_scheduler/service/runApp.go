@@ -13,6 +13,7 @@ import (
 	"github.com/xkdgo/otus_golang_homeworks/hw12_13_14_15_calendar/internal/config"
 	"github.com/xkdgo/otus_golang_homeworks/hw12_13_14_15_calendar/internal/helper"
 	"github.com/xkdgo/otus_golang_homeworks/hw12_13_14_15_calendar/internal/logger"
+	"github.com/xkdgo/otus_golang_homeworks/hw12_13_14_15_calendar/internal/queue/controllers/rabbit"
 	"github.com/xkdgo/otus_golang_homeworks/hw12_13_14_15_calendar/plugins/logger/zap"
 )
 
@@ -47,7 +48,15 @@ func RunApp(config config.SchedulerConfig) {
 		cancel()
 		os.Exit(1) //nolint:gocritic
 	}
-	scheduler := app.NewAppScheduler(logg, storage, period)
+
+	//TODO make amqp config
+	sender, err := rabbit.NewSender(serviceName, "direct", true, "amqp://guest:guest@localhost:5672/", logg)
+	if err != nil {
+		logg.Error("cant init sender:", errors.Wrapf(err, "%s %s", serviceName, "amqp://guest:guest@localhost:5672/"))
+		cancel()
+		os.Exit(1) //nolint:gocritic
+	}
+	defer sender.Stop()
+	scheduler := app.NewAppScheduler(logg, storage, period, sender)
 	scheduler.Start(ctx)
-	// <-exitCh
 }
