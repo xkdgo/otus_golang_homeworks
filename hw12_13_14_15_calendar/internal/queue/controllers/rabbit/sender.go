@@ -2,6 +2,7 @@ package rabbit
 
 import (
 	"errors"
+	"time"
 
 	amqp "github.com/rabbitmq/amqp091-go"
 	"github.com/xkdgo/otus_golang_homeworks/hw12_13_14_15_calendar/internal/logger"
@@ -10,13 +11,22 @@ import (
 
 var _ queue.Notifier = (*Sender)(nil)
 
-type Sender struct {
-	exchange   Exchange
-	dialString string
-	log        *logger.Logger
-	connection *amqp.Connection
-	channel    *amqp.Channel
-	errCh      chan *amqp.Error
+type Publisher struct {
+	exchangeName string
+	routingKey   string
+	channel      *amqp.Channel
+}
+
+func (p *Publisher) Publish(exchangeName, routingKey string, message amqp.Publishing) error {
+	return p.channel.Publish(p.exchangeName, p.routingKey, false, false, message)
+}
+
+func NewPublisher(exchangeName, routingKey string, ch *amqp.Channel) *Publisher {
+	return &Publisher{
+		exchangeName: exchangeName,
+		routingKey:   routingKey,
+		channel:      ch,
+	}
 }
 
 type Exchange struct {
@@ -25,15 +35,49 @@ type Exchange struct {
 	Durable bool
 }
 
-func NewExchange(exchange, typ string, durable bool) Exchange {
-	return Exchange{
-		Name:    exchange,
-		Type:    typ,
-		Durable: durable,
-	}
+var DefaultExchange = Exchange{
+	Name:    "exchange",
+	Type:    "direct",
+	Durable: true,
 }
 
-func (s *Sender) Init() error {
+type Sender struct {
+	opts             queue.Options
+	exchange         Exchange
+	publishers       map[string]*Publisher
+	dialString       string
+	reconnectTimeOut time.Duration
+	log              *logger.Logger
+	connection       *amqp.Connection
+	channel          *amqp.Channel
+	errCh            chan *amqp.Error
+}
+
+func (s *Sender) Init(opts ...queue.Option) error {
+	for _, o := range opts {
+		o(&s.opts)
+	}
+	if exchangeName, ok := s.opts.Context.Value(exchangeNameKey{}).(string); ok {
+		s.exchange.Name = exchangeName
+	}
+	if exchangeType, ok := s.opts.Context.Value(exchangeTypeKey{}).(string); ok {
+		s.exchange.Type = exchangeType
+	}
+	if exchangeDurable, ok := s.opts.Context.Value(exchangeDurableKey{}).(bool); ok {
+		s.exchange.Durable = exchangeDurable
+	}
+	err := s.Dial()
+	if err != nil {
+		return err
+	}
+	err = s.ConnectExchange()
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (s *Sender) reconnect() error {
 	err := s.Dial()
 	if err != nil {
 		return err
@@ -95,7 +139,7 @@ func (s *Sender) Stop() error {
 	return nil
 }
 
-func (s *Sender) Publish(routingKey string, contentType string, body []byte) error {
+func (s *Sender) Publish(routingKey, contentType string, body []byte) error {
 	message := amqp.Publishing{
 		ContentType: contentType,
 		Body:        body,
@@ -103,18 +147,33 @@ func (s *Sender) Publish(routingKey string, contentType string, body []byte) err
 	if s.channel == nil {
 		return errors.New("channel is nil")
 	}
-	return s.channel.Publish(s.exchange.Name, routingKey, false, false, message)
+	_, ok := s.publishers[routingKey]
+	if !ok {
+		s.publishers[routingKey] = NewPublisher(s.exchange.Name, routingKey, s.channel)
+	}
+	return s.publishers[routingKey].Publish(s.exchange.Name, routingKey, message)
 }
 
-func NewSender(exchangeName, typ string, durable bool, dialString string, logg *logger.Logger) (*Sender, error) {
+func NewSender(
+	exchangeName, typ string,
+	durable bool,
+	dialString string,
+	reconnectTimeOut time.Duration,
+	logg *logger.Logger) (*Sender, error) {
 	s := &Sender{
-		exchange:   NewExchange(exchangeName, typ, durable),
-		dialString: dialString,
-		log:        logg,
-		connection: nil,
-		channel:    nil,
+		exchange:         DefaultExchange,
+		publishers:       make(map[string]*Publisher),
+		dialString:       dialString,
+		reconnectTimeOut: reconnectTimeOut,
+		log:              logg,
+		connection:       nil,
+		channel:          nil,
 	}
-	if err := s.Init(); err != nil {
+	if err := s.Init(
+		WithExchangeName(exchangeName),
+		WithExchangeType(typ),
+		WithExchangeDurable(durable),
+	); err != nil {
 		return nil, err
 	}
 	return s, nil
@@ -130,9 +189,11 @@ func (s *Sender) Listen() {
 			return
 		}
 		s.log.Infof("listen catch error %v", amqperr)
-		err := s.Init()
+		s.publishers = make(map[string]*Publisher)
+		err := s.reconnect()
 		for err != nil {
-			err = s.Init()
+			time.Sleep(s.reconnectTimeOut)
+			err = s.reconnect()
 		}
 		s.log.Infof("reconnected to server %s", s.dialString)
 	}

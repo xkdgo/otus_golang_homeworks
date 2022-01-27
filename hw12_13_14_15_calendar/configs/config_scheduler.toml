@@ -8,6 +8,7 @@ type = "sql"
 [scheduler]
 timeoutquery = "10s"
 ttldays = "365"
+reconnectmsec = "1000"
 
 [broker]
 dialstring = "amqp://guest:guest@localhost:5672/"

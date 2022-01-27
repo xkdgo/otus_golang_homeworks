@@ -11,26 +11,29 @@ import (
 )
 
 type Scheduler struct {
-	wg       *sync.WaitGroup
-	Logger   Logger
-	storage  storage.Storage
-	timeout  time.Duration
-	ttl      time.Duration
-	Notifier queue.Notifier
+	wg         *sync.WaitGroup
+	Logger     Logger
+	storage    storage.Storage
+	timeout    time.Duration
+	ttl        time.Duration
+	Notifier   queue.Notifier
+	routingKey string
 }
 
 func NewAppScheduler(
 	logger Logger,
 	stor storage.Storage,
 	timeout, ttl time.Duration,
-	notifier queue.Notifier) *Scheduler {
+	notifier queue.Notifier,
+	routingKey string) *Scheduler {
 	return &Scheduler{
-		wg:       &sync.WaitGroup{},
-		Logger:   logger,
-		storage:  stor,
-		timeout:  timeout,
-		ttl:      ttl,
-		Notifier: notifier,
+		wg:         &sync.WaitGroup{},
+		Logger:     logger,
+		storage:    stor,
+		timeout:    timeout,
+		ttl:        ttl,
+		Notifier:   notifier,
+		routingKey: routingKey,
 	}
 }
 
@@ -82,7 +85,7 @@ func (a *Scheduler) notify(event storage.Event) error {
 	if err != nil {
 		return err
 	}
-	err = a.Notifier.Publish("calendar_sender", "application/json", body)
+	err = a.Notifier.Publish(a.routingKey, "application/json", body)
 	if err != nil {
 		return err
 	}

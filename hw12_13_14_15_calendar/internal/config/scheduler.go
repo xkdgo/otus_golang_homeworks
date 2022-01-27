@@ -15,8 +15,9 @@ type SchedulerConfig struct {
 }
 
 type SchedulerConf struct {
-	TimeoutQuery string `mapstructure:"timeoutquery"`
-	TTL          string `mapstructure:"ttldays"`
+	TimeoutQuery     string `mapstructure:"timeoutquery"`
+	TTL              string `mapstructure:"ttldays"`
+	ReconnectTimeOut string `mapstructure:"reconnectmsec"`
 }
 
 type BrokerConf struct {
@@ -28,6 +29,7 @@ func NewSchedulerConfig(cfgFile string, serviceName string) (SchedulerConfig, er
 	viper.SetDefault("scheduler.timeoutquery", defaultQuery)
 	viper.SetDefault("scheduler.ttldays", defaultTTL)
 	viper.SetDefault("broker.dialstring", defaultBrokerDialString)
+	viper.SetDefault("scheduler.reconnectmsec", defaultReconnectTimeOut)
 	var config SchedulerConfig
 	viper.SetConfigFile(cfgFile)
 	if err := viper.ReadInConfig(); err != nil {
