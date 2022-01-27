@@ -3,7 +3,7 @@ package main
 import (
 	"log"
 
-	amqp "github.com/rabbitmq/amqp091-go"
+	"github.com/xkdgo/otus_golang_homeworks/hw12_13_14_15_calendar/internal/queue/controllers/rabbit"
 )
 
 const serviceNameExchange = "scheduler"
@@ -15,45 +15,18 @@ func failOnError(err error, msg string) {
 }
 
 func main() {
-	conn, err := amqp.Dial("amqp://guest:guest@localhost:5672/")
-	failOnError(err, "Failed to connect to RabbitMQ")
-	defer conn.Close()
-
-	ch, err := conn.Channel()
-	failOnError(err, "Failed to open a channel")
-	defer ch.Close()
-
-	q, err := ch.QueueDeclare(
-		"sender", // name
-		false,    // durable
-		false,    // delete when unused
-		false,    // exclusive
-		false,    // no-wait
-		nil,      // arguments
+	consumer := rabbit.Consumer{}
+	err := consumer.Init(
+		rabbit.WithDialString("amqp://guest:guest@localhost:5672/"),
+		rabbit.WithExchangeName(serviceNameExchange),
+		rabbit.WithRoutingKey("calendar_sender"),
+		rabbit.WithQueueName("sender"),
 	)
-	failOnError(err, "Failed to declare a queue")
+	failOnError(err, "consumer init fail")
+	msgs, err := consumer.ConsumeQueue()
+	failOnError(err, "consumer fail to consume")
 
-	log.Printf("Binding queue %s to exchange %s with routing key %s", q.Name, "logs_direct", "calendar_sender")
-	err = ch.QueueBind(
-		q.Name,              // queue name
-		"calendar_sender",   // routing key
-		serviceNameExchange, // exchange
-		false,
-		nil)
-	failOnError(err, "Failed to bind a queue")
-
-	msgs, err := ch.Consume(
-		q.Name,            // queue
-		"calendar_sender", // consumer
-		true,              // auto ack
-		false,             // exclusive
-		false,             // no local
-		false,             // no wait
-		nil,               // args
-	)
-	failOnError(err, "Failed to register a consumer")
-
-	forever := make(chan bool)
+	consumererrorCh := consumer.GetErrorChannel()
 
 	go func() {
 		for d := range msgs {
@@ -62,5 +35,6 @@ func main() {
 	}()
 
 	log.Printf(" [*] Waiting for logs. To exit press CTRL+C")
-	<-forever
+	errconsume := <-consumererrorCh
+	log.Printf("%q\n", errconsume)
 }

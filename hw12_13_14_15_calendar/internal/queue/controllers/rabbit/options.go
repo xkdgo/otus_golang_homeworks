@@ -20,8 +20,20 @@ func WithExchangeDurable(exchangeDurable bool) queue.Option {
 	return queue.SetOption(exchangeDurableKey{}, exchangeDurable)
 }
 
-// type routingKeyKey struct{}
+type routingKeyKey struct{}
 
-// func WithRoutingKey(routingKey string) queue.Option {
-// 	return queue.SetOption(routingKeyKey{}, routingKey)
-// }
+func WithRoutingKey(routingKey string) queue.Option {
+	return queue.SetOption(routingKeyKey{}, routingKey)
+}
+
+type queueNameKey struct{}
+
+func WithQueueName(queueName string) queue.Option {
+	return queue.SetOption(queueNameKey{}, queueName)
+}
+
+type dialStringKey struct{}
+
+func WithDialString(dialString string) queue.Option {
+	return queue.SetOption(dialStringKey{}, dialString)
+}
