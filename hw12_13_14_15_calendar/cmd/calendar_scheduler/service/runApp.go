@@ -59,15 +59,15 @@ func RunApp(config config.SchedulerConfig) {
 		os.Exit(1)
 	}
 	ttl := time.Duration(ttlnum*hoursInDay) * time.Hour
-	reconnectTimeOut, err := strconv.Atoi(config.Scheduler.ReconnectTimeOut)
+	reconnectTimeOutInt, err := strconv.Atoi(config.Scheduler.ReconnectTimeOut)
 	if err != nil {
 		logg.Error("cant parse scheduler reconnectTimeOut:", errors.Wrapf(err, "%s", config.Scheduler.ReconnectTimeOut))
 		cancel()
 		os.Exit(1)
 	}
-	reconnectTimeOutMsec := time.Duration(reconnectTimeOut) * time.Millisecond
+	reconnectTimeOut := time.Duration(reconnectTimeOutInt) * time.Millisecond
 
-	sender, err := rabbit.NewSender(serviceName, "direct", true, config.Broker.DialString, reconnectTimeOutMsec, logg)
+	sender, err := rabbit.NewSender(serviceName, "direct", true, config.Broker.DialString, reconnectTimeOut, logg)
 	if err != nil {
 		logg.Error("cant init sender:", errors.Wrapf(err, "%s %s", serviceName, config.Broker.DialString))
 		cancel()
