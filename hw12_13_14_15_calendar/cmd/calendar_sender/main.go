@@ -6,9 +6,11 @@ import (
 	amqp "github.com/rabbitmq/amqp091-go"
 )
 
+const serviceNameExchange = "scheduler"
+
 func failOnError(err error, msg string) {
 	if err != nil {
-		log.Panicf("%s: %s", msg, err)
+		log.Fatalf("%s: %s", msg, err)
 	}
 }
 
@@ -21,22 +23,11 @@ func main() {
 	failOnError(err, "Failed to open a channel")
 	defer ch.Close()
 
-	// err = ch.ExchangeDeclare(
-	// 	"logs_direct", // name
-	// 	"direct",      // type
-	// 	true,          // durable
-	// 	false,         // auto-deleted
-	// 	false,         // internal
-	// 	false,         // no-wait
-	// 	nil,           // arguments
-	// )
-	// failOnError(err, "Failed to declare an exchange")
-
 	q, err := ch.QueueDeclare(
 		"sender", // name
 		false,    // durable
 		false,    // delete when unused
-		true,     // exclusive
+		false,    // exclusive
 		false,    // no-wait
 		nil,      // arguments
 	)
@@ -44,9 +35,9 @@ func main() {
 
 	log.Printf("Binding queue %s to exchange %s with routing key %s", q.Name, "logs_direct", "calendar_sender")
 	err = ch.QueueBind(
-		q.Name,            // queue name
-		"calendar_sender", // routing key
-		"scheduler",       // exchange
+		q.Name,              // queue name
+		"calendar_sender",   // routing key
+		serviceNameExchange, // exchange
 		false,
 		nil)
 	failOnError(err, "Failed to bind a queue")

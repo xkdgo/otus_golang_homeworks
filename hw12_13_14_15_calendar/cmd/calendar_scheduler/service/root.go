@@ -10,7 +10,10 @@ import (
 	"github.com/xkdgo/otus_golang_homeworks/hw12_13_14_15_calendar/internal/config"
 )
 
-const serviceName = "scheduler"
+const (
+	serviceName = "scheduler"
+	routingKey  = "calendar_sender"
+)
 
 // rootCmd represents the base command when called without any subcommands.
 var (
