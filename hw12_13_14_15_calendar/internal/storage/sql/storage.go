@@ -275,8 +275,8 @@ func (s *Storage) ListEventsToNotify(
 	id, title, userid, datetimestart, tilldate, alarmdatetime
 	FROM public.events 
 	WHERE 
-	(
-		alarmdatetime BETWEEN  $1 and $2
+	(   
+		alarmdatetime >= $1 AND alarmdatetime < $2
 	)`, periodTimeStart, periodTimeEnd)
 	if err != nil {
 		return nil, err
@@ -311,6 +311,53 @@ func (s *Storage) ListEventsToNotify(
 	}
 	if err := rows.Err(); err != nil {
 		return nil, errors.Wrap(err, ": rows read error listeventstonotify")
+	}
+	return events, nil
+}
+
+func (s *Storage) ListEventsToDelete(ttl time.Duration) (events []storage.Event, err error) {
+	currentTime := time.Now()
+	upperLimit := currentTime.Add(time.Duration(-1) * ttl)
+	rows, err := s.db.Query(`SELECT	
+	id, title, userid, datetimestart, tilldate, alarmdatetime
+	FROM public.events 
+	WHERE 
+	(
+		datetimestart < $1
+	)`, upperLimit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var (
+			id            string
+			title         string
+			userid        string
+			datetimestart time.Time
+			tilldate      time.Time
+			alarmdatetime time.Time
+		)
+		if err := rows.Scan(
+			&id, &title, &userid,
+			&datetimestart, &tilldate, &alarmdatetime); err != nil {
+			if err != nil {
+				return nil, errors.Wrap(err, ": rows next error ListEventsToDelete")
+			}
+		}
+		events = append(events,
+			convertToStorageEvent(pgEvent{
+				ID:            id,
+				Title:         title,
+				Userid:        userid,
+				Datetimestart: datetimestart,
+				Tilldate:      tilldate,
+				Alarmdatetime: alarmdatetime,
+			}))
+	}
+	if err := rows.Err(); err != nil {
+		return nil, errors.Wrap(err, ": rows read error ListEventsToDelete")
 	}
 	return events, nil
 }

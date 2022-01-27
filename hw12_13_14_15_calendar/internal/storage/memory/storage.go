@@ -1,6 +1,7 @@
 package memorystorage
 
 import (
+	"fmt"
 	"sync"
 	"time"
 
@@ -162,4 +163,8 @@ func (s *Storage) ListEventsToNotify(
 		}
 	}
 	return events, nil
+}
+
+func (s *Storage) ListEventsToDelete(ttl time.Duration) (events []storage.Event, err error) {
+	return nil, fmt.Errorf("ListEventsToDelete not implemented in memory storage")
 }
