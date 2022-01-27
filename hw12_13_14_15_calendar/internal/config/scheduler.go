@@ -11,15 +11,23 @@ type SchedulerConfig struct {
 	Logger    LoggerConf    `mapstructure:"logger"`
 	Storage   StorageConf   `mapstructure:"db"`
 	Scheduler SchedulerConf `mapstructure:"scheduler"`
+	Broker    BrokerConf    `mapstructure:"broker"`
 }
 
 type SchedulerConf struct {
 	TimeoutQuery string `mapstructure:"timeoutquery"`
+	TTL          string `mapstructure:"ttldays"`
+}
+
+type BrokerConf struct {
+	DialString string `mapstructure:"dialstring"`
 }
 
 func NewSchedulerConfig(cfgFile string, serviceName string) (SchedulerConfig, error) {
 	viper.SetDefault("db.type", defaultStorageType)
 	viper.SetDefault("scheduler.timeoutquery", defaultQuery)
+	viper.SetDefault("scheduler.ttldays", defaultTTL)
+	viper.SetDefault("broker.dialstring", defaultBrokerDialString)
 	var config SchedulerConfig
 	viper.SetConfigFile(cfgFile)
 	if err := viper.ReadInConfig(); err != nil {
