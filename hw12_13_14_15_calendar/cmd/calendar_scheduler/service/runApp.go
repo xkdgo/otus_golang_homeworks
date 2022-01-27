@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
+	"strconv"
 	"syscall"
 	"time"
 
@@ -16,6 +17,8 @@ import (
 	"github.com/xkdgo/otus_golang_homeworks/hw12_13_14_15_calendar/internal/queue/controllers/rabbit"
 	"github.com/xkdgo/otus_golang_homeworks/hw12_13_14_15_calendar/plugins/logger/zap"
 )
+
+const hoursInDay = 24
 
 func RunApp(config config.SchedulerConfig) {
 	// exitCh := make(chan struct{})
@@ -43,20 +46,27 @@ func RunApp(config config.SchedulerConfig) {
 		cancel()
 		os.Exit(1)
 	}
+	period = period.Truncate(time.Second)
 	if period < 1*time.Second {
 		logg.Error("period should be equal or more than 1s", errors.Wrapf(err, "%s", config.Scheduler.TimeoutQuery))
 		cancel()
 		os.Exit(1)
 	}
-
-	// TODO make amqp config
-	sender, err := rabbit.NewSender(serviceName, "direct", true, "amqp://guest:guest@localhost:5672/", logg)
+	ttlnum, err := strconv.Atoi(config.Scheduler.TTL)
 	if err != nil {
-		logg.Error("cant init sender:", errors.Wrapf(err, "%s %s", serviceName, "amqp://guest:guest@localhost:5672/"))
+		logg.Error("cant parse scheduler ttl:", errors.Wrapf(err, "%s", config.Scheduler.TTL))
+		cancel()
+		os.Exit(1)
+	}
+	ttl := time.Duration(ttlnum*hoursInDay) * time.Hour
+
+	sender, err := rabbit.NewSender(serviceName, "direct", true, config.Broker.DialString, logg)
+	if err != nil {
+		logg.Error("cant init sender:", errors.Wrapf(err, "%s %s", serviceName, config.Broker.DialString))
 		cancel()
 		os.Exit(1)
 	}
 	defer sender.Stop()
-	scheduler := app.NewAppScheduler(logg, storage, period, sender)
+	scheduler := app.NewAppScheduler(logg, storage, period, ttl, sender)
 	scheduler.Start(ctx)
 }

@@ -15,23 +15,30 @@ type Scheduler struct {
 	Logger   Logger
 	storage  storage.Storage
 	timeout  time.Duration
+	ttl      time.Duration
 	Notifier queue.Notifier
 }
 
-func NewAppScheduler(logger Logger, stor storage.Storage, timeout time.Duration, notifier queue.Notifier) *Scheduler {
+func NewAppScheduler(
+	logger Logger,
+	stor storage.Storage,
+	timeout, ttl time.Duration,
+	notifier queue.Notifier) *Scheduler {
 	return &Scheduler{
 		wg:       &sync.WaitGroup{},
 		Logger:   logger,
 		storage:  stor,
 		timeout:  timeout,
+		ttl:      ttl,
 		Notifier: notifier,
 	}
 }
 
 func (a *Scheduler) Start(ctx context.Context) {
-	a.wg.Add(2)
+	a.wg.Add(3)
 	go a.queryDataToSend(ctx)
-	go a.MonitorConnectToQueue()
+	go a.monitorConnectToQueue()
+	go a.cleanOldEvents(ctx)
 	a.wg.Wait()
 }
 
@@ -56,7 +63,7 @@ func (a *Scheduler) queryDataToSend(ctx context.Context) {
 				a.Logger.Debugf("querydatatosend error: %q", err)
 			}
 			for _, event := range events {
-				err := a.Notify(event)
+				err := a.notify(event)
 				if err != nil {
 					a.Logger.Errorf("cant send event to queue %q", err)
 				}
@@ -65,7 +72,7 @@ func (a *Scheduler) queryDataToSend(ctx context.Context) {
 	}
 }
 
-func (a *Scheduler) Notify(event storage.Event) error {
+func (a *Scheduler) notify(event storage.Event) error {
 	var m queue.NotifyEvent
 	m.ID = event.ID
 	m.UserID = event.UserID
@@ -79,10 +86,36 @@ func (a *Scheduler) Notify(event storage.Event) error {
 	if err != nil {
 		return err
 	}
+	a.Logger.Debugf("sended event %v", string(body))
 	return nil
 }
 
-func (a *Scheduler) MonitorConnectToQueue() {
+func (a *Scheduler) cleanOldEvents(ctx context.Context) {
+	defer a.wg.Done()
+	timer := time.NewTicker(10 * time.Second)
+	defer timer.Stop()
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-timer.C:
+			events, err := a.storage.ListEventsToDelete(a.ttl)
+			if err != nil {
+				a.Logger.Debugf("querydatatodeleteerror: %q", err)
+			}
+			for _, event := range events {
+				err := a.storage.DeleteEvent(event.ID)
+				if err != nil {
+					a.Logger.Errorf("querydatatodeleteerror: %q", err)
+				} else {
+					a.Logger.Debugf("deleted event id:%v title: '%v'", event.ID, event.Title)
+				}
+			}
+		}
+	}
+}
+
+func (a *Scheduler) monitorConnectToQueue() {
 	defer a.wg.Done()
 	go a.Notifier.Listen()
 }
