@@ -63,8 +63,7 @@ func (c *Receiver) Init(opts ...queue.Option) error {
 	} else {
 		return fmt.Errorf("init fail missed dialString")
 	}
-	err := c.Dial()
-	if err != nil {
+	if err := c.Dial(); err != nil {
 		return err
 	}
 	c.wg = &sync.WaitGroup{}
@@ -131,7 +130,7 @@ func (c *Receiver) GetErrorChannel() chan *amqp.Error {
 func (c *Receiver) reconnect(ctx context.Context, timeout time.Duration) {
 	err := c.Dial()
 	for err != nil {
-		ticker := time.NewTicker(time.Second)
+		ticker := time.NewTicker(timeout)
 		select {
 		case <-ctx.Done():
 			return
@@ -142,7 +141,27 @@ func (c *Receiver) reconnect(ctx context.Context, timeout time.Duration) {
 			} else {
 				c.log.Infof("connected ...")
 			}
+		}
+	}
+}
 
+func (c *Receiver) PutMessageToHandler(ctx context.Context, i int, closeCh chan struct{}, msgs <-chan amqp.Delivery) {
+	c.log.Debugf("gouroutine %d started", i)
+	defer c.wg.Done()
+	defer c.log.Debugf("gouroutine %d exited", i)
+	for {
+		select {
+		case <-ctx.Done():
+			c.log.Debugf("gouroutine %d context closed", i)
+			return
+		case <-closeCh:
+			c.log.Debugf("gouroutine %d catched closeCh event", i)
+			return
+		case d, open := <-msgs:
+			if !open {
+				return
+			}
+			c.handler(ctx, d.ContentEncoding, d.Body)
 		}
 	}
 }
@@ -179,26 +198,7 @@ func (c *Receiver) Handle(
 			closeCh := make(chan struct{}, 1)
 			for i := 0; i < numWorkers; i++ {
 				c.wg.Add(1)
-				go func(ctx context.Context, i int, closeCh chan struct{}) {
-					c.log.Debugf("gouroutine %d started", i)
-					defer c.wg.Done()
-					defer c.log.Debugf("gouroutine %d exited", i)
-					for {
-						select {
-						case <-ctx.Done():
-							c.log.Debugf("gouroutine %d context closed", i)
-							return
-						case <-closeCh:
-							c.log.Debugf("gouroutine %d catched closeCh event", i)
-							return
-						case d, open := <-msgs:
-							if !open {
-								return
-							}
-							c.handler(ctx, d.ContentEncoding, d.Body)
-						}
-					}
-				}(ctx, i, closeCh)
+				go c.PutMessageToHandler(ctx, i, closeCh, msgs)
 			}
 			go func() {
 				errconsume := <-consumererrorCh

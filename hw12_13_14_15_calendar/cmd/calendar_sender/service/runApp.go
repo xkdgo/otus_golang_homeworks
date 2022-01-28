@@ -16,12 +16,9 @@ import (
 	"github.com/xkdgo/otus_golang_homeworks/hw12_13_14_15_calendar/plugins/logger/zap"
 )
 
-var (
-	exchangeName = serviceNameExchange
-)
+var exchangeName = serviceNameExchange
 
 func RunApp(config config.SenderConfig) {
-
 	pluginlogger, err := zap.NewLogger(logger.WithFields(map[string]interface{}{serviceName: ""}))
 	if err != nil {
 		fmt.Println("Cant initialize zap logger")
@@ -50,5 +47,4 @@ func RunApp(config config.SenderConfig) {
 		logg.Fatalf("error during init application %v", err)
 	}
 	sender.Start(ctx)
-
 }
