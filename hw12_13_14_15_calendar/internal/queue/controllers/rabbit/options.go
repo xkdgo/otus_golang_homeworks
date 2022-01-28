@@ -1,6 +1,10 @@
 package rabbit
 
-import "github.com/xkdgo/otus_golang_homeworks/hw12_13_14_15_calendar/internal/queue"
+import (
+	"context"
+
+	"github.com/xkdgo/otus_golang_homeworks/hw12_13_14_15_calendar/internal/queue"
+)
 
 type exchangeNameKey struct{}
 
@@ -37,3 +41,11 @@ type dialStringKey struct{}
 func WithDialString(dialString string) queue.Option {
 	return queue.SetOption(dialStringKey{}, dialString)
 }
+
+type handlerFunKey struct{}
+
+func WithHandlerFunc(worker Worker) queue.Option {
+	return queue.SetOption(handlerFunKey{}, worker)
+}
+
+type Worker func(ctx context.Context, contentEncoding string, content []byte)
