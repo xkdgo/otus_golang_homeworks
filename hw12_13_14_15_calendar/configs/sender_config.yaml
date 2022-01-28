@@ -1,0 +1,10 @@
+logger:
+  level: "DEBUG"
+
+sender:
+  reconnectmsec: "10000"
+  routingkey: "calendar_sender"
+  numworkers: 3
+
+broker:
+  dialstring: "amqp://guest:guest@localhost:5672/"
