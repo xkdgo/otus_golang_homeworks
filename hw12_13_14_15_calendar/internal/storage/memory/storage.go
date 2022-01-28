@@ -1,6 +1,7 @@
 package memorystorage
 
 import (
+	"fmt"
 	"sync"
 	"time"
 
@@ -148,4 +149,22 @@ func (s *Storage) ListEventsByDuration(
 		}
 	}
 	return events, nil
+}
+
+func (s *Storage) ListEventsToNotify(
+	periodTimeStart time.Time,
+	periodTimeEnd time.Time) (events []storage.Event, err error) {
+	for _, ev := range s.data {
+		switch {
+		case ev.AlarmTime.Truncate(time.Second) == periodTimeStart:
+			events = append(events, *ev)
+		case ev.AlarmTime.After(periodTimeStart) && ev.AlarmTime.Before(periodTimeEnd):
+			events = append(events, *ev)
+		}
+	}
+	return events, nil
+}
+
+func (s *Storage) ListEventsToDelete(ttl time.Duration) (events []storage.Event, err error) {
+	return nil, fmt.Errorf("ListEventsToDelete not implemented in memory storage")
 }

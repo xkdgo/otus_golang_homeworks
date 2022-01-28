@@ -7,11 +7,13 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"github.com/xkdgo/otus_golang_homeworks/hw12_13_14_15_calendar/cmd/calendar/jobs/migrations"
 	"github.com/xkdgo/otus_golang_homeworks/hw12_13_14_15_calendar/internal/config"
 )
 
-const serviceName = "calendar"
+const (
+	serviceName = "scheduler"
+	routingKey  = "calendar_sender"
+)
 
 // rootCmd represents the base command when called without any subcommands.
 var (
@@ -20,13 +22,13 @@ var (
 	BuildDate string
 	GitHash   string
 	rootCmd   = &cobra.Command{
-		Use:   "calendar",
-		Short: "This is the calendar application",
-		Long: `This is the calendar application
+		Use:   "calendar_scheduler",
+		Short: "This is the calendar_scheduler application",
+		Long: `This is the calendar_scheduler application
 it can use several storages
 all configurations you can find in config file example`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			config, err := config.NewCalendarConfig(CfgFile, serviceName)
+			config, err := config.NewSchedulerConfig(CfgFile, serviceName)
 			if err != nil {
 				return err
 			}
@@ -55,13 +57,6 @@ all configurations you can find in config file example`,
 			}
 		},
 	}
-
-	migrateCmd = &cobra.Command{
-		Use:   "migrate",
-		Short: "migrate cmd is used for database migration",
-		Long:  `migrate cmd is used for database migration: migrate <up | down>`,
-		RunE:  migrations.Migrate,
-	}
 )
 
 // Execute adds all child commands to the root command and sets flags appropriately.
@@ -84,12 +79,4 @@ func init() {
 	viper.BindPFlag("config", rootCmd.Flags().Lookup("config"))
 
 	rootCmd.AddCommand(cmdVersion)
-	migrateCmd.Flags().StringVarP(
-		&migrations.CfgFile,
-		"config",
-		"c",
-		"/etc/calendar/config.toml",
-		"Path to configuration file")
-	viper.BindPFlag("config", migrateCmd.Flags().Lookup("config"))
-	rootCmd.AddCommand(migrateCmd)
 }

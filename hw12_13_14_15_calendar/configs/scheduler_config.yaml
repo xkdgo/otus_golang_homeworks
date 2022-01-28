@@ -1,0 +1,13 @@
+logger:
+  level: "DEBUG"
+db:
+  type: "sql"
+  dsn: "postgres://hwuser:hwpasswd@0.0.0.0:5432/calendar?sslmode=disable"
+
+scheduler:
+  timeoutquery: "10s"
+  ttldays: "365"
+  reconnectmsec: "1000"
+
+broker:
+  dialstring: "amqp://guest:guest@localhost:5672/"
