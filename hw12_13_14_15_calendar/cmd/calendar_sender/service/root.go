@@ -22,9 +22,9 @@ var (
 	BuildDate string
 	GitHash   string
 	rootCmd   = &cobra.Command{
-		Use:   "calendar_scheduler",
-		Short: "This is the calendar_scheduler application",
-		Long: `This is the calendar_scheduler application
+		Use:   "calendar_sender",
+		Short: "This is the calendar_sender application",
+		Long: `This is the calendar_sender application
 it can use several storages
 all configurations you can find in config file example`,
 		RunE: func(cmd *cobra.Command, args []string) error {
