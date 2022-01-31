@@ -1,5 +1,5 @@
 # Собираем в гошке
-FROM golang:1.16.2 as build
+FROM golang:1.17.6-alpine3.15 as build
 
 ENV BIN_FILE /opt/calendar/calendar-app
 ENV CODE_DIR /go/src/
@@ -9,7 +9,10 @@ WORKDIR ${CODE_DIR}
 # Кэшируем слои с модулями
 COPY go.mod .
 COPY go.sum .
-RUN go mod download
+RUN go mod download 
+ENV WAIT_VERSION 2.9.0
+ADD https://github.com/ufoscout/docker-compose-wait/releases/download/$WAIT_VERSION/wait /wait
+RUN chmod +x /wait
 
 COPY . ${CODE_DIR}
 
@@ -18,7 +21,7 @@ COPY . ${CODE_DIR}
 ARG LDFLAGS
 RUN CGO_ENABLED=0 go build \
         -ldflags "$LDFLAGS" \
-        -o ${BIN_FILE} cmd/calendar/*
+        -o ${BIN_FILE} ./cmd/calendar/
 
 # На выходе тонкий образ
 FROM alpine:3.9
@@ -28,9 +31,12 @@ LABEL SERVICE="calendar"
 LABEL MAINTAINERS="student@otus.ru"
 
 ENV BIN_FILE "/opt/calendar/calendar-app"
+ENV MIGRATION_DIR "/opt/calendar/migrations/"
+COPY --from=build /wait /wait
 COPY --from=build ${BIN_FILE} ${BIN_FILE}
+COPY ./migrations/* ${MIGRATION_DIR}
 
-ENV CONFIG_FILE /etc/calendar/config.toml
-COPY ./configs/config.toml ${CONFIG_FILE}
+# ENV CONFIG_FILE /etc/calendar/calendar_config.yaml
+# COPY ./configs/calendar_config.yaml ${CONFIG_FILE}
 
-CMD ${BIN_FILE} -config ${CONFIG_FILE}
+CMD ${BIN_FILE} --fromenv

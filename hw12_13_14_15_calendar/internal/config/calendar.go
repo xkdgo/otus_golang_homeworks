@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+	"os"
 	"strings"
 
 	"github.com/spf13/viper"
@@ -28,7 +29,7 @@ type StorageConf struct {
 	DSN  string `mapstructure:"dsn"`
 }
 
-func NewCalendarConfig(cfgFile string, serviceName string) (CalendarConfig, error) {
+func NewCalendarConfigFromFile(cfgFile string, serviceName string) (CalendarConfig, error) {
 	viper.SetDefault("server.port", defaultServerPort)
 	viper.SetDefault("db.type", defaultStorageType)
 	var config CalendarConfig
@@ -36,6 +37,33 @@ func NewCalendarConfig(cfgFile string, serviceName string) (CalendarConfig, erro
 	if err := viper.ReadInConfig(); err != nil {
 		return CalendarConfig{}, fmt.Errorf("failed to read config: %w", err)
 	}
+	// viper.SetEnvPrefix(serviceName)
+	// replacer := strings.NewReplacer(".", "_")
+	// viper.SetEnvKeyReplacer(replacer)
+	// viper.AutomaticEnv()
+	err := viper.Unmarshal(&config)
+	if err != nil {
+		return CalendarConfig{}, fmt.Errorf("unable to decode into struct, %w", err)
+	}
+	fmt.Printf("%+v\n", config)
+	fmt.Println(viper.AllSettings())
+	return config, nil
+}
+
+func NewCalendarConfigFromEnv(serviceName string) (CalendarConfig, error) {
+	viper.SetDefault("server.port", "8080")
+	viper.SetDefault("grpc.port", "9090")
+	viper.SetDefault("db.type", "sql")
+	user := os.Getenv("DB_USER")
+	passwd := os.Getenv("DB_PASSWORD")
+	host := os.Getenv("DB_HOST")
+	port := os.Getenv("DB_PORT") //5432
+	if port == "" {
+		port = "5432"
+	}
+	viper.SetDefault("db.dsn", fmt.Sprintf("postgres://%s:%s@%s:%s/calendar?sslmode=disable", user, passwd, host, port))
+	viper.SetDefault("logger.level", "INFO")
+	var config CalendarConfig
 	viper.SetEnvPrefix(serviceName)
 	replacer := strings.NewReplacer(".", "_")
 	viper.SetEnvKeyReplacer(replacer)

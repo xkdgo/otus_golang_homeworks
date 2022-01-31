@@ -1,3 +1,17 @@
+.EXPORT_ALL_VARIABLES:
+
+BIN_FILE="/opt/calendar/calendar-app"
+MIGRATION_DIR="/opt/calendar/migrations/"
+
+DB_USER=hwuser
+DB_PASSWORD=hwpasswd
+
+CALENDAR_SERVER_HOST=0.0.0.0
+CALENDAR_SERVER_PORT=8081
+CALENDAR_GRPC_HOST=0.0.0.0
+CALENDAR_GRPC_PORT=9091
+CALENDAR_LOGGER_LEVEL=DEBUG
+
 generate:
 	go generate ./...
 
@@ -21,10 +35,19 @@ build-img:
 	docker build \
 		--build-arg=LDFLAGS="$(LDFLAGS)" \
 		-t $(DOCKER_IMG) \
-		-f build/Dockerfile .
+		-f build/Dockerfile_calendar .
 
 run-img: build-img
 	docker run $(DOCKER_IMG)
+
+compose-build:
+	docker-compose -f deployments/docker-compose.yaml -p calendar build
+
+up:
+	docker-compose -f deployments/docker-compose.yaml -p calendar up
+
+down:
+	docker-compose -f deployments/docker-compose.yaml -p calendar down --rmi local
 
 version: build
 	$(BIN) version
