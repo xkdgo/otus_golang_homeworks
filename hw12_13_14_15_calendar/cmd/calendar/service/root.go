@@ -94,7 +94,8 @@ func init() {
 	viper.BindPFlag("config", rootCmd.Flags().Lookup("config"))
 
 	rootCmd.AddCommand(cmdVersion)
-	migrateCmd.Flags().BoolVarP(&migrations.FromEnv, "fromenv", "e", false, "Configuration parameters from env and some defaults")
+	migrateCmd.Flags().BoolVarP(&migrations.FromEnv,
+		"fromenv", "e", false, "Configuration parameters from env and some defaults")
 	viper.BindPFlag("fromenv", migrateCmd.Flags().Lookup("fromenv"))
 	migrateCmd.Flags().StringVarP(
 		&migrations.CfgFile,

@@ -10,6 +10,8 @@ import (
 	"github.com/pressly/goose/v3"
 	"github.com/spf13/cobra"
 	"github.com/xkdgo/otus_golang_homeworks/hw12_13_14_15_calendar/internal/config"
+
+	// need import to implement migrations at this block.
 	_ "github.com/xkdgo/otus_golang_homeworks/hw12_13_14_15_calendar/migrations"
 )
 
@@ -39,7 +41,7 @@ func Migrate(cmd *cobra.Command, args []string) error {
 
 	db, err := goose.OpenDBWithDriver("pgx", conf.Storage.DSN)
 	if err != nil {
-		return fmt.Errorf("goose: failed to open DB: %v", err)
+		return errors.Wrapf(err, "goose: failed to open DB: %v", conf.Storage.DSN)
 	}
 
 	defer func() {

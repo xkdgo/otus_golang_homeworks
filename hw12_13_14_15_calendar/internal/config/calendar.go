@@ -57,7 +57,7 @@ func NewCalendarConfigFromEnv(serviceName string) (CalendarConfig, error) {
 	user := os.Getenv("DB_USER")
 	passwd := os.Getenv("DB_PASSWORD")
 	host := os.Getenv("DB_HOST")
-	port := os.Getenv("DB_PORT") //5432
+	port := os.Getenv("DB_PORT")
 	if port == "" {
 		port = "5432"
 	}
