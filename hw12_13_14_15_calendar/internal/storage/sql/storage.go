@@ -270,7 +270,7 @@ func (s *Storage) checkEventIDisPresent(eventID string) error {
 func (s *Storage) ListEventsToNotify(
 	periodTimeStart time.Time,
 	periodTimeEnd time.Time) (events []storage.Event, err error) {
-	fmt.Println("Query between ", periodTimeStart, "and ", periodTimeEnd)
+	// fmt.Println("Query between ", periodTimeStart, "and ", periodTimeEnd)
 	rows, err := s.db.Query(`SELECT	
 	id, title, userid, datetimestart, tilldate, alarmdatetime
 	FROM public.events 
