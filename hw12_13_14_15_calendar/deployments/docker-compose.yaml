@@ -39,7 +39,7 @@ services:
     command: sh -c "/wait && /opt/calendar/calendar-app --fromenv"
     environment:
       - WAIT_HOSTS=db:5432
-      - WAIT_BEFORE_HOSTS=4
+      - WAIT_BEFORE=4
       - DB_USER=${DB_USER}
       - DB_PASSWORD=${DB_PASSWORD}
       - DB_HOST=db
@@ -75,7 +75,7 @@ services:
     command: sh -c "/wait && /opt/calendar_scheduler/calendar-scheduler-app --fromenv"
     environment:
       - WAIT_HOSTS=db:5432,rabbitmq:5672
-      - WAIT_BEFORE_HOSTS=4
+      - WAIT_BEFORE=4
       - DB_USER=${DB_USER}
       - DB_PASSWORD=${DB_PASSWORD}
       - DB_HOST=db
@@ -93,7 +93,7 @@ services:
     command: sh -c "/wait && /opt/calendar_sender/calendar-sender-app --fromenv"
     environment:
       - WAIT_HOSTS=rabbitmq:5672
-      - WAIT_BEFORE_HOSTS=4
+      - WAIT_BEFORE=4
       - SENDER_LOGGER_LEVEL=DEBUG
       - RABBITMQ_DEFAULT_USER=${RABBITMQ_DEFAULT_USER}
       - RABBITMQ_DEFAULT_PASS=${RABBITMQ_DEFAULT_PASS}

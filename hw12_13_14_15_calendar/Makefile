@@ -20,6 +20,12 @@ RABBITMQ_DEFAULT_PASS=guest
 generate:
 	go generate ./...
 
+gen-go: tests/integration/generated/openapicli/api_default.go
+
+tests/integration/generated/openapicli/api_default.go: api/calendar.yaml
+	docker run --rm -v ${PWD}:/local openapitools/openapi-generator-cli:v4.3.1 generate --package-name=openapicli -Dapis,models,supportingFiles=client.go -i /local/api/calendar.yaml -g go -o /local/tests/integration/generated/openapicli
+	docker run --rm -v ${PWD}:/local openapitools/openapi-generator-cli:v4.3.1 generate --package-name=openapicli -DsupportingFiles=configuration.go -i /local/api/calendar.yaml -g go -o /local/tests/integration/generated/openapicli
+
 BIN := "./bin/calendar"
 BIN_SCH := "./bin/calendar_scheduler"
 BIN_SEND := "./bin/calendar_sender"
@@ -66,5 +72,8 @@ install-lint-deps:
 
 lint: install-lint-deps
 	golangci-lint run ./...
+
+integration-tests:
+	./scripts/integration_tests.sh
 
 .PHONY: build run build-img run-img version test lint
