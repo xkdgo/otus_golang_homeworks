@@ -23,8 +23,8 @@ generate:
 gen-go: tests/integration/generated/openapicli/api_default.go
 
 tests/integration/generated/openapicli/api_default.go: api/calendar.yaml
-	docker run --rm -v ${PWD}:/local openapitools/openapi-generator-cli:v4.3.1 generate --package-name=openapicli -Dapis,models,supportingFiles=client.go -i /local/api/calendar.yaml -g go -o /local/tests/integration/generated/openapicli
-	docker run --rm -v ${PWD}:/local openapitools/openapi-generator-cli:v4.3.1 generate --package-name=openapicli -DsupportingFiles=configuration.go -i /local/api/calendar.yaml -g go -o /local/tests/integration/generated/openapicli
+	docker run --rm -v ${PWD}:/local openapitools/openapi-generator-cli:v5.4.0 generate --package-name=openapicli --global-property apis,models,supportingFiles=client.go -i /local/api/calendar.yaml -g go -o /local/tests/integration/generated/openapicli
+	docker run --rm -v ${PWD}:/local openapitools/openapi-generator-cli:v5.4.0 generate --package-name=openapicli --global-property supportingFiles=configuration.go -i /local/api/calendar.yaml -g go -o /local/tests/integration/generated/openapicli
 
 BIN := "./bin/calendar"
 BIN_SCH := "./bin/calendar_scheduler"

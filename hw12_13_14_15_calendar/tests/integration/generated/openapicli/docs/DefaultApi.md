@@ -11,15 +11,46 @@ Method | HTTP request | Description
 
 ## CalendarGet
 
-> string CalendarGet(ctx, )
+> string CalendarGet(ctx).Execute()
 
 
 
-Hello World
 
-### Required Parameters
+
+### Example
+
+```go
+package main
+
+import (
+    "context"
+    "fmt"
+    "os"
+    openapiclient "./openapi"
+)
+
+func main() {
+
+    configuration := openapiclient.NewConfiguration()
+    apiClient := openapiclient.NewAPIClient(configuration)
+    resp, r, err := apiClient.DefaultApi.CalendarGet(context.Background()).Execute()
+    if err != nil {
+        fmt.Fprintf(os.Stderr, "Error when calling `DefaultApi.CalendarGet``: %v\n", err)
+        fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
+    }
+    // response from `CalendarGet`: string
+    fmt.Fprintf(os.Stdout, "Response from `DefaultApi.CalendarGet`: %v\n", resp)
+}
+```
+
+### Path Parameters
 
 This endpoint does not need any parameter.
+
+### Other Parameters
+
+Other parameters are passed through a pointer to a apiCalendarGetRequest struct via the builder pattern
+
 
 ### Return type
 
@@ -41,17 +72,49 @@ This endpoint does not need any parameter.
 
 ## CreateEvent
 
-> string CreateEvent(ctx, eventTemplate)
+> string CreateEvent(ctx).EventTemplate(eventTemplate).Execute()
 
 
 
-### Required Parameters
+### Example
+
+```go
+package main
+
+import (
+    "context"
+    "fmt"
+    "os"
+    openapiclient "./openapi"
+)
+
+func main() {
+    eventTemplate := *openapiclient.NewEventTemplate("Id_example", "Title_example", "Datetimestart_example", "Duration_example", "Alarmtime_example") // EventTemplate | 
+
+    configuration := openapiclient.NewConfiguration()
+    apiClient := openapiclient.NewAPIClient(configuration)
+    resp, r, err := apiClient.DefaultApi.CreateEvent(context.Background()).EventTemplate(eventTemplate).Execute()
+    if err != nil {
+        fmt.Fprintf(os.Stderr, "Error when calling `DefaultApi.CreateEvent``: %v\n", err)
+        fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
+    }
+    // response from `CreateEvent`: string
+    fmt.Fprintf(os.Stdout, "Response from `DefaultApi.CreateEvent`: %v\n", resp)
+}
+```
+
+### Path Parameters
+
+
+
+### Other Parameters
+
+Other parameters are passed through a pointer to a apiCreateEventRequest struct via the builder pattern
 
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
-**ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
-**eventTemplate** | [**EventTemplate**](EventTemplate.md)|  | 
+ **eventTemplate** | [**EventTemplate**](EventTemplate.md) |  | 
 
 ### Return type
 
