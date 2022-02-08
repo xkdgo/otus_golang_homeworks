@@ -10,7 +10,7 @@ servers:
 paths:
   /calendar:
     get:
-      description: Hello World            
+      description: Hello Calendar            
       responses:
         '200':
           description: Successful response
@@ -36,18 +36,68 @@ paths:
               schema:
                 type: string
 
+  /calendar/event/day/{date}:
+    get:
+      operationId: getEventsByDay
+      parameters:
+        - name: date
+          in: path
+          required: true
+          description: date in format "2006-01-02"
+          schema:
+            type: string
+      responses:
+        "200":
+          description: "all tasks by given day"
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/EventTemplate'
+
+  /calendar/event/week/{date}:
+    get:
+      operationId: getEventsByWeek
+      parameters:
+        - name: date
+          in: path
+          required: true
+          description: date in format "2006-01-02"
+          schema:
+            type: string
+      responses:
+        "200":
+          description: "all tasks by given week"
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/EventTemplate'
+
+  /calendar/event/month/{date}:
+    get:
+      operationId: getEventsByMonth
+      parameters:
+        - name: date
+          in: path
+          required: true
+          description: date in format "2006-01-02"
+          schema:
+            type: string
+      responses:
+        "200":
+          description: "all tasks by given month"
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/EventTemplate'
+
 components:
   schemas:
-    EventsTemplate:
-      type: object
-      required:
-        - events
-      properties:
-        events:
-          type: array
-          items:
-            $ref: '#/components/schemas/EventTemplate'
-
     EventTemplate:
       type: object
       required:

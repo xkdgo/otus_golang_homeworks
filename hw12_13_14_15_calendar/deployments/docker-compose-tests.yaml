@@ -10,4 +10,3 @@ services:
       - WAIT_HOSTS=calendar:${CALENDAR_SERVER_PORT}
       - WAIT_BEFORE=2
     command: sh -c "/wait && go test -v -tags integration ./tests/integration"
-    depends_on: [calendar]
