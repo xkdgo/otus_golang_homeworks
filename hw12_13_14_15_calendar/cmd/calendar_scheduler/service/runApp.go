@@ -36,8 +36,18 @@ func RunApp(config config.SchedulerConfig) {
 	storage, err := helper.InitStorage(config.Storage.Type, config.Storage.DSN)
 	if err != nil {
 		logg.Error("cant init storage:", errors.Wrapf(err, "%s", config.Storage.Type))
-		cancel()
-		os.Exit(1) //nolint:gocritic
+		for i := 0; i < 5; i++ {
+			time.Sleep(5 * time.Second)
+			storage, err = helper.InitStorage(config.Storage.Type, config.Storage.DSN)
+			if err == nil {
+				break
+			}
+		}
+		if err != nil {
+			logg.Error("cant init storage:", errors.Wrapf(err, "%s", config.Storage.Type))
+			cancel()
+			os.Exit(1) //nolint:gocritic
+		}
 	}
 
 	period, err := time.ParseDuration(config.Scheduler.TimeoutQuery)
