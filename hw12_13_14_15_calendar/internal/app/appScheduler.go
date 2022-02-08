@@ -61,6 +61,7 @@ func (a *Scheduler) queryDataToSend(ctx context.Context) {
 		case <-timer.C:
 			timeStart := time.Now().UTC().Truncate(time.Second)
 			periodTimeEnd := timeStart.Add(a.timeout).Truncate(time.Second)
+			a.Logger.Debugf("querydatatosend period: %s to %s", timeStart, periodTimeEnd)
 			events, err := a.storage.ListEventsToNotify(timeStart, periodTimeEnd)
 			if err != nil {
 				a.Logger.Debugf("querydatatosend error: %q", err)
