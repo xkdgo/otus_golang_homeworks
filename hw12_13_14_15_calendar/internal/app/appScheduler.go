@@ -59,7 +59,7 @@ func (a *Scheduler) queryDataToSend(ctx context.Context) {
 			a.Stop()
 			return
 		case <-timer.C:
-			timeStart := time.Now().Truncate(time.Second)
+			timeStart := time.Now().UTC().Truncate(time.Second)
 			periodTimeEnd := timeStart.Add(a.timeout).Truncate(time.Second)
 			events, err := a.storage.ListEventsToNotify(timeStart, periodTimeEnd)
 			if err != nil {
@@ -79,7 +79,7 @@ func (a *Scheduler) notify(event storage.Event) error {
 	var m queue.NotifyEvent
 	m.ID = event.ID
 	m.UserID = event.UserID
-	m.DateTimeStart = event.DateTimeStart.Format(time.RFC3339)
+	m.DateTimeStart = event.DateTimeStart.UTC().Format(time.RFC3339)
 	m.Title = event.Title
 	body, err := json.Marshal(m)
 	if err != nil {
