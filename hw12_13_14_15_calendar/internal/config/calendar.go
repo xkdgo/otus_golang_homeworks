@@ -16,7 +16,8 @@ type CalendarConfig struct {
 }
 
 type LoggerConf struct {
-	Level string `mapstructure:"level"`
+	Logfile string `mapstructure:"logfile"`
+	Level   string `mapstructure:"level"`
 }
 
 type ServerConf struct {

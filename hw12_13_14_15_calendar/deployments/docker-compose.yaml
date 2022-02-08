@@ -79,6 +79,7 @@ services:
       - DB_USER=${DB_USER}
       - DB_PASSWORD=${DB_PASSWORD}
       - DB_HOST=db
+      - SCHEDULER_TIMEOUTQUERY=5s
       - SCHEDULER_LOGGER_LEVEL=DEBUG
       - RABBITMQ_DEFAULT_USER=${RABBITMQ_DEFAULT_USER}
       - RABBITMQ_DEFAULT_PASS=${RABBITMQ_DEFAULT_PASS}
@@ -95,11 +96,15 @@ services:
       - WAIT_HOSTS=rabbitmq:5672
       - WAIT_BEFORE=4
       - SENDER_LOGGER_LEVEL=DEBUG
+      - SENDER_LOGGER_LOGFILE=/var/log/sender/mail.log
       - RABBITMQ_DEFAULT_USER=${RABBITMQ_DEFAULT_USER}
       - RABBITMQ_DEFAULT_PASS=${RABBITMQ_DEFAULT_PASS}
       - RABBITMQ_HOST=rabbitmq
       - RABBITMQ_PORT=5672
+    volumes:
+      - sender:/var/log/sender/
     depends_on: [rabbitmq]
 
 volumes:
   db:
+  sender:

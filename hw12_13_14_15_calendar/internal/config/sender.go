@@ -41,6 +41,7 @@ func NewSenderConfigFromFile(cfgFile string, serviceName string) (SenderConfig, 
 
 func NewSenderConfigFromEnv(serviceName string) (SenderConfig, error) {
 	viper.SetDefault("logger.level", defaultLoggerLevel)
+	viper.SetDefault("logger.logfile", "")
 	viper.SetDefault("sender.reconnectmsec", defaultReconnectTimeOut)
 	viper.SetDefault("sender.routingkey", defaultRoutingKey)
 	viper.SetDefault("sender.numworkers", defaultNumWorkers)

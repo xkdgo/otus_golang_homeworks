@@ -8,5 +8,9 @@ services:
     environment:
       - API_URL=http://calendar:${CALENDAR_SERVER_PORT}
       - WAIT_HOSTS=calendar:${CALENDAR_SERVER_PORT}
-      - WAIT_BEFORE=2
+      - WAIT_BEFORE=5
+      - TESTS_TIMEOUT=10s
+      - TESTS_MAIL=/var/log/sender/mail.log
+    volumes:
+      - sender:/var/log/sender/
     command: sh -c "/wait && go test -v -tags integration ./tests/integration"
