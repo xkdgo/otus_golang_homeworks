@@ -30,3 +30,7 @@ func (s *APISuite) TestGetEventsOnCurrentCursorDayWeekMonth() {
 	s.GetEventsOnCurrentCursorWeek()
 	s.GetEventsOnCurrentCursorMonth()
 }
+
+func (s *APISuite) TestSender() {
+	s.CheckMailIsSended()
+}

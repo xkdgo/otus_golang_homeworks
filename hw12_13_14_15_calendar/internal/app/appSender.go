@@ -2,7 +2,6 @@ package app
 
 import (
 	"context"
-	"log"
 	"time"
 
 	"github.com/xkdgo/otus_golang_homeworks/hw12_13_14_15_calendar/internal/logger"
@@ -42,7 +41,7 @@ func (a *Sender) Start(ctx context.Context) {
 }
 
 func (a *Sender) handler(ctx context.Context, contentEncoding string, content []byte) {
-	log.Printf("%s %s", contentEncoding, content)
+	a.logger.Infof("sended %s %s", contentEncoding, content)
 }
 
 func NewAppSender(

@@ -1,9 +1,11 @@
 package apitest
 
 import (
+	"bufio"
 	"context"
 	"io"
 	"net/http"
+	"os"
 	"strings"
 	"sync"
 	"time"
@@ -121,4 +123,40 @@ func (s *APISuiteActions) GetEventsOnCurrentCursorMonth() {
 	s.Require().Equal(http.StatusOK, resp.StatusCode)
 	s.T().Logf("answ: %v", answ)
 	s.Require().Equal(s.CountDaysBeforeBeginNextMonthFromCursor(), len(answ))
+}
+
+func (s *APISuiteActions) CheckMailIsSended() {
+	s.T().Helper()
+	timeoutEnv := os.Getenv("TESTS_TIMEOUT")
+	timeout, err := time.ParseDuration(timeoutEnv)
+	s.Require().NoError(err)
+	s.mx.Lock()
+	s.eventDate = time.Now().Add(60 * time.Second)
+	s.mx.Unlock()
+	s.CreateEvent()
+	time.Sleep(timeout + 60*time.Second)
+	toPath := os.Getenv("TESTS_MAIL")
+	fd, err := os.Open(toPath)
+	s.Require().NoError(err)
+	scanner := bufio.NewScanner(fd)
+	timer := time.NewTimer(timeout * 3)
+	var sendDetected bool
+	sended := make(chan struct{})
+	go func(ch chan struct{}) {
+		for scanner.Scan() {
+			answ := scanner.Text()
+			s.T().Logf("reading mail log: %v", answ)
+			if strings.Contains(answ, "sended") {
+				close(sended)
+				return
+			}
+		}
+	}(sended)
+	select {
+	case <-timer.C:
+		sendDetected = false
+	case <-sended:
+		sendDetected = true
+	}
+	s.Require().Truef(sendDetected, "send not detected during timeout %s", timeout*3)
 }
