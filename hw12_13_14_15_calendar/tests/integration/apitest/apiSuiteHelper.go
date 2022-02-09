@@ -13,7 +13,7 @@ func (s *APISuiteActions) testEventFromSelfTime() openapicli.EventTemplate {
 		Id:            "",
 		Title:         faker.Sentence(),
 		Datetimestart: s.eventDate.Format(time.RFC822Z),
-		Duration:      fmt.Sprint(time.Duration(24 * time.Hour)),
+		Duration:      fmt.Sprint(24 * time.Hour),
 		Alarmtime:     s.eventDate.Format(time.RFC822Z),
 	}
 	s.T().Logf("test event: %+v", t)

@@ -23,12 +23,14 @@ func RunApp(config config.SenderConfig) {
 	var err error
 	var pluginlogger logger.PluggedLogger
 	if config.Logger.Logfile != "" {
-		err = os.MkdirAll(filepath.Dir(config.Logger.Logfile), 0770)
+		err = os.MkdirAll(filepath.Dir(config.Logger.Logfile), 0o770)
 		if err != nil {
 			fmt.Println("cant create path for logfile", err, config.Logger.Logfile)
 			os.Exit(1)
 		}
-		pluginlogger, err = zap.NewLogger(logger.WithFields(map[string]interface{}{serviceName: ""}), zap.WithFile(config.Logger.Logfile))
+		pluginlogger, err = zap.NewLogger(
+			logger.WithFields(map[string]interface{}{serviceName: ""}),
+			zap.WithFile(config.Logger.Logfile))
 	} else {
 		pluginlogger, err = zap.NewLogger(logger.WithFields(map[string]interface{}{serviceName: ""}))
 	}
