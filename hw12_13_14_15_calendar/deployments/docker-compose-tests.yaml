@@ -1,0 +1,17 @@
+version: "3"
+
+services:
+  integration-tests:
+    build:
+      context: ..
+      dockerfile: ./build/Dockerfile_integration
+    environment:
+      - API_URL=http://calendar:${CALENDAR_SERVER_PORT}
+      - WAIT_HOSTS=calendar:${CALENDAR_SERVER_PORT}
+      - WAIT_BEFORE=5
+      - TESTS_TIMEOUT=1m
+      - TESTS_MAIL=/var/log/sender/mail.log
+    volumes:
+      - sender:/var/log/sender/
+    command: sh -c "/wait && go test -v -tags integration ./tests/integration"
+    depends_on: [calendar, scheduler, sender]

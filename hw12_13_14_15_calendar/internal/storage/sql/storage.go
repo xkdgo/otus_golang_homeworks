@@ -60,9 +60,9 @@ func (s *Storage) CreateEvent(ev storage.Event) (id string, err error) {
 		dbConvertedEvent.ID,
 		dbConvertedEvent.Title,
 		dbConvertedEvent.Userid,
-		dbConvertedEvent.Datetimestart,
-		dbConvertedEvent.Tilldate,
-		dbConvertedEvent.Alarmdatetime,
+		dbConvertedEvent.Datetimestart.UTC(),
+		dbConvertedEvent.Tilldate.UTC(),
+		dbConvertedEvent.Alarmdatetime.UTC(),
 	)
 	if err != nil {
 		fmt.Println(err)
@@ -138,6 +138,7 @@ func (s *Storage) ListEventsOnDay(userID string, dateTime time.Time) (events []s
 }
 
 func (s *Storage) ListEventsOnCurrentWeek(userID string, dateTime time.Time) (events []storage.Event, err error) {
+	dateTime = dateTime.UTC()
 	weekDayNum := dateTime.Weekday()
 	var startOfGivenWeek time.Time
 	switch weekDayNum {
@@ -162,12 +163,12 @@ func (s *Storage) ListEventsOnCurrentWeek(userID string, dateTime time.Time) (ev
 }
 
 func (s *Storage) ListEventsOnCurrentMonth(userID string, dateTime time.Time) (events []storage.Event, err error) {
-	year := dateTime.Year()
-	month := dateTime.Month()
-	startMonth := time.Date(year, month, 1, 0, 0, 0, 0, dateTime.Location())
-	endOfGivenMonth := startMonth.AddDate(0, 1, 0)
-	durationOfCurrentMonth := endOfGivenMonth.Sub(dateTime)
-	return s.ListEventsByDuration(userID, dateTime, durationOfCurrentMonth)
+	year := dateTime.UTC().Year()
+	month := dateTime.UTC().Month()
+	startMonth := time.Date(year, month, 1, 0, 0, 0, 0, dateTime.Location()).UTC()
+	endOfGivenMonth := startMonth.UTC().AddDate(0, 1, 0)
+	durationOfCurrentMonth := endOfGivenMonth.Sub(dateTime.UTC())
+	return s.ListEventsByDuration(userID, dateTime.UTC(), durationOfCurrentMonth)
 }
 
 func (s *Storage) ListEventsByDuration(
@@ -183,7 +184,7 @@ func (s *Storage) ListEventsByDuration(
 		datetimestart BETWEEN  $1 and $2
 		AND
 		userid = $3
-	)`, dateTime, dateTime.Add(duration), userID)
+	)`, dateTime.UTC(), dateTime.UTC().Add(duration), userID)
 	if err != nil {
 		return nil, err
 	}
@@ -210,9 +211,9 @@ func (s *Storage) ListEventsByDuration(
 				ID:            id,
 				Title:         title,
 				Userid:        userid,
-				Datetimestart: datetimestart,
-				Tilldate:      tilldate,
-				Alarmdatetime: alarmdatetime,
+				Datetimestart: datetimestart.UTC(),
+				Tilldate:      tilldate.UTC(),
+				Alarmdatetime: alarmdatetime.UTC(),
 			}))
 	}
 	if err := rows.Err(); err != nil {
@@ -270,14 +271,14 @@ func (s *Storage) checkEventIDisPresent(eventID string) error {
 func (s *Storage) ListEventsToNotify(
 	periodTimeStart time.Time,
 	periodTimeEnd time.Time) (events []storage.Event, err error) {
-	fmt.Println("Query between ", periodTimeStart, "and ", periodTimeEnd)
+	// fmt.Println("Query between ", periodTimeStart, "and ", periodTimeEnd)
 	rows, err := s.db.Query(`SELECT	
 	id, title, userid, datetimestart, tilldate, alarmdatetime
 	FROM public.events 
 	WHERE 
 	(   
 		alarmdatetime >= $1 AND alarmdatetime < $2
-	)`, periodTimeStart, periodTimeEnd)
+	)`, periodTimeStart.UTC(), periodTimeEnd.UTC())
 	if err != nil {
 		return nil, err
 	}
@@ -304,9 +305,9 @@ func (s *Storage) ListEventsToNotify(
 				ID:            id,
 				Title:         title,
 				Userid:        userid,
-				Datetimestart: datetimestart,
-				Tilldate:      tilldate,
-				Alarmdatetime: alarmdatetime,
+				Datetimestart: datetimestart.UTC(),
+				Tilldate:      tilldate.UTC(),
+				Alarmdatetime: alarmdatetime.UTC(),
 			}))
 	}
 	if err := rows.Err(); err != nil {
@@ -316,7 +317,7 @@ func (s *Storage) ListEventsToNotify(
 }
 
 func (s *Storage) ListEventsToDelete(ttl time.Duration) (events []storage.Event, err error) {
-	currentTime := time.Now()
+	currentTime := time.Now().UTC()
 	upperLimit := currentTime.Add(time.Duration(-1) * ttl)
 	rows, err := s.db.Query(`SELECT	
 	id, title, userid, datetimestart, tilldate, alarmdatetime

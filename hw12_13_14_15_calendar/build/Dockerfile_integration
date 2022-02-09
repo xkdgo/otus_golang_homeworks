@@ -1,0 +1,14 @@
+FROM golang:1.17.6-alpine3.15
+
+WORKDIR /opt/integartion_tests
+COPY . .
+
+RUN go mod download
+RUN go mod verify
+ENV WAIT_VERSION 2.9.0
+ADD https://github.com/ufoscout/docker-compose-wait/releases/download/$WAIT_VERSION/wait /wait
+RUN chmod +x /wait
+
+ENV CGO_ENABLED=0
+
+CMD go test -v -tags integration ./tests/integration

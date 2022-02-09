@@ -1,1 +1,110 @@
-version: "3"
+version: '3.4'
+
+services:
+  db:
+    image: postgres:14
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $POSTGRES_USER"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    volumes:
+      - db:/var/lib/postgresql/data
+      - ./init-database.sh:/docker-entrypoint-initdb.d/init-database.sh
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    ports:
+      - 5432:5432
+
+  migrate:
+    build:
+      context: ..
+      dockerfile: ./build/Dockerfile_calendar
+    command: sh -c "/wait && /opt/calendar/calendar-app migrate up --fromenv"
+    environment:
+      - WAIT_HOSTS=db:5432
+      - WAIT_BEFORE=3
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - DB_HOST=db
+      - MIGRATION_DIR=/opt/calendar/migrations
+    depends_on: [db]
+  
+  calendar:
+    build:
+      context: ..
+      dockerfile: ./build/Dockerfile_calendar
+    command: sh -c "/wait && /opt/calendar/calendar-app --fromenv"
+    environment:
+      - WAIT_HOSTS=db:5432
+      - WAIT_BEFORE=4
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - DB_HOST=db
+      - CALENDAR_SERVER_HOST=${CALENDAR_SERVER_HOST}
+      - CALENDAR_SERVER_PORT=${CALENDAR_SERVER_PORT}
+      - CALENDAR_GRPC_HOST=${CALENDAR_GRPC_HOST}
+      - CALENDAR_GRPC_PORT=${CALENDAR_GRPC_PORT}
+      - CALENDAR_LOGGER_LEVEL=DEBUG
+    depends_on: [db]
+    ports:
+      - "${OUTER_CALENDAR_SERVER_PORT}:${CALENDAR_SERVER_PORT}"
+      - "${OUTER_CALENDAR_GRPC_PORT}:${CALENDAR_GRPC_PORT}"
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:15672"]
+      interval: 30s
+      timeout: 10s
+      retries: 10
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS}
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+  
+  scheduler:
+    build:
+      context: ..
+      dockerfile: ./build/Dockerfile_scheduler
+    command: sh -c "/wait && /opt/calendar_scheduler/calendar-scheduler-app --fromenv"
+    environment:
+      - WAIT_HOSTS=db:5432,rabbitmq:5672
+      - WAIT_BEFORE=4
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - DB_HOST=db
+      - SCHEDULER_TIMEOUTQUERY=5s
+      - SCHEDULER_LOGGER_LEVEL=DEBUG
+      - RABBITMQ_DEFAULT_USER=${RABBITMQ_DEFAULT_USER}
+      - RABBITMQ_DEFAULT_PASS=${RABBITMQ_DEFAULT_PASS}
+      - RABBITMQ_HOST=rabbitmq
+      - RABBITMQ_PORT=5672
+    depends_on: [db, rabbitmq]
+
+  sender:
+    build:
+      context: ..
+      dockerfile: ./build/Dockerfile_sender
+    command: sh -c "/wait && /opt/calendar_sender/calendar-sender-app --fromenv"
+    environment:
+      - WAIT_HOSTS=rabbitmq:5672
+      - WAIT_BEFORE=4
+      - SENDER_LOGGER_LEVEL=DEBUG
+      - SENDER_LOGGER_LOGFILE=/var/log/sender/mail.log
+      - RABBITMQ_DEFAULT_USER=${RABBITMQ_DEFAULT_USER}
+      - RABBITMQ_DEFAULT_PASS=${RABBITMQ_DEFAULT_PASS}
+      - RABBITMQ_HOST=rabbitmq
+      - RABBITMQ_PORT=5672
+    volumes:
+      - sender:/var/log/sender/
+    depends_on: [rabbitmq]
+
+volumes:
+  db:
+  sender:

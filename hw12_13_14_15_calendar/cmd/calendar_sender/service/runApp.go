@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"strconv"
 	"time"
 
@@ -19,9 +20,22 @@ import (
 var exchangeName = serviceNameExchange
 
 func RunApp(config config.SenderConfig) {
-	pluginlogger, err := zap.NewLogger(logger.WithFields(map[string]interface{}{serviceName: ""}))
+	var err error
+	var pluginlogger logger.PluggedLogger
+	if config.Logger.Logfile != "" {
+		err = os.MkdirAll(filepath.Dir(config.Logger.Logfile), 0o770)
+		if err != nil {
+			fmt.Println("cant create path for logfile", err, config.Logger.Logfile)
+			os.Exit(1)
+		}
+		pluginlogger, err = zap.NewLogger(
+			logger.WithFields(map[string]interface{}{serviceName: ""}),
+			zap.WithFile(config.Logger.Logfile))
+	} else {
+		pluginlogger, err = zap.NewLogger(logger.WithFields(map[string]interface{}{serviceName: ""}))
+	}
 	if err != nil {
-		fmt.Println("Cant initialize zap logger")
+		fmt.Println("Cant initialize zap logger", err)
 		os.Exit(1)
 	}
 	logg := logger.New(config.Logger.Level, pluginlogger)

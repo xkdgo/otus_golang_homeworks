@@ -44,9 +44,9 @@ func (a *Calendar) CreateEvent(ctx context.Context,
 		ID:            id,
 		Title:         title,
 		UserID:        userID,
-		DateTimeStart: dateTimeStart,
+		DateTimeStart: dateTimeStart.UTC(),
 		Duration:      duration,
-		AlarmTime:     alarmTime,
+		AlarmTime:     alarmTime.UTC(),
 	})
 }
 
@@ -59,9 +59,9 @@ func (a *Calendar) UpdateEvent(ctx context.Context,
 		ID:            id,
 		Title:         title,
 		UserID:        userID,
-		DateTimeStart: dateTimeStart,
+		DateTimeStart: dateTimeStart.UTC(),
 		Duration:      duration,
-		AlarmTime:     alarmTime,
+		AlarmTime:     alarmTime.UTC(),
 	})
 }
 
@@ -73,19 +73,19 @@ func (a *Calendar) ListEventsDay(
 	ctx context.Context,
 	userID string,
 	dateTime time.Time) (events []storage.Event, err error) {
-	return a.storage.ListEventsOnDay(userID, dateTime)
+	return a.storage.ListEventsOnDay(userID, dateTime.UTC())
 }
 
 func (a *Calendar) ListEventsWeek(
 	ctx context.Context,
 	userID string,
 	dateTime time.Time) (events []storage.Event, err error) {
-	return a.storage.ListEventsOnCurrentWeek(userID, dateTime)
+	return a.storage.ListEventsOnCurrentWeek(userID, dateTime.UTC())
 }
 
 func (a *Calendar) ListEventsMonth(
 	ctx context.Context,
 	userID string,
 	dateTime time.Time) (events []storage.Event, err error) {
-	return a.storage.ListEventsOnCurrentMonth(userID, dateTime)
+	return a.storage.ListEventsOnCurrentMonth(userID, dateTime.UTC())
 }

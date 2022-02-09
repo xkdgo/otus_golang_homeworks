@@ -18,6 +18,7 @@ const (
 // rootCmd represents the base command when called without any subcommands.
 var (
 	CfgFile   string
+	FromEnv   bool
 	Release   string
 	BuildDate string
 	GitHash   string
@@ -28,13 +29,19 @@ var (
 it can use several storages
 all configurations you can find in config file example`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			config, err := config.NewSenderConfig(CfgFile, serviceName)
+			var err error
+			var conf config.SenderConfig
+			if FromEnv {
+				conf, err = config.NewSenderConfigFromEnv(serviceName)
+			} else {
+				conf, err = config.NewSenderConfigFromFile(CfgFile, serviceName)
+			}
 			if err != nil {
 				return err
 			}
 			fmt.Println(CfgFile)
-			fmt.Printf("%#v\n", config)
-			RunApp(config)
+			fmt.Printf("%#v\n", conf)
+			RunApp(conf)
 			return nil
 		},
 	}
@@ -75,6 +82,8 @@ func init() {
 	// Here you will define your flags and configuration settings.
 	// Cobra supports persistent flags, which, if defined here,
 	// will be global for your application.
+	rootCmd.Flags().BoolVarP(&FromEnv, "fromenv", "e", false, "Configuration parameters from env and some defaults")
+	viper.BindPFlag("fromenv", rootCmd.Flags().Lookup("fromenv"))
 	rootCmd.Flags().StringVarP(&CfgFile, "config", "c", "/etc/calendar/config_sender.toml", "Path to configuration file")
 	viper.BindPFlag("config", rootCmd.Flags().Lookup("config"))
 

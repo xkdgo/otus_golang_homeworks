@@ -221,8 +221,8 @@ func (h *CalendarHandler) handleGetEventsDayWeekMonth(w http.ResponseWriter, r *
 		}
 	}
 	modelEvents := convertToModelsEvents(events)
-	w.WriteHeader(http.StatusOK)
 	httpJSON(w, modelEvents, h.logger)
+	w.WriteHeader(http.StatusOK)
 }
 
 func HelloEventHandler(w http.ResponseWriter, r *http.Request) {
