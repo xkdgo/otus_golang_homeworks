@@ -49,29 +49,34 @@ func (a *Scheduler) Stop() {
 	a.Logger.Debugf("stop calendar scheduler")
 }
 
+func (a *Scheduler) queryAndNotify() {
+	timeStart := time.Now().UTC().Truncate(time.Second)
+	periodTimeEnd := timeStart.Add(a.timeout).Truncate(time.Second)
+	a.Logger.Debugf("querydatatosend period: %s to %s", timeStart, periodTimeEnd)
+	events, err := a.storage.ListEventsToNotify(timeStart, periodTimeEnd)
+	if err != nil {
+		a.Logger.Debugf("querydatatosend error: %q", err)
+	}
+	for _, event := range events {
+		err := a.notify(event)
+		if err != nil {
+			a.Logger.Errorf("cant send event to queue %q", err)
+		}
+	}
+}
+
 func (a *Scheduler) queryDataToSend(ctx context.Context) {
 	defer a.wg.Done()
-	timer := time.NewTicker(a.timeout)
-	defer timer.Stop()
+	ticker := time.NewTicker(a.timeout)
+	defer ticker.Stop()
+	a.queryAndNotify()
 	for {
 		select {
 		case <-ctx.Done():
 			a.Stop()
 			return
-		case <-timer.C:
-			timeStart := time.Now().UTC().Truncate(time.Second)
-			periodTimeEnd := timeStart.Add(a.timeout).Truncate(time.Second)
-			a.Logger.Debugf("querydatatosend period: %s to %s", timeStart, periodTimeEnd)
-			events, err := a.storage.ListEventsToNotify(timeStart, periodTimeEnd)
-			if err != nil {
-				a.Logger.Debugf("querydatatosend error: %q", err)
-			}
-			for _, event := range events {
-				err := a.notify(event)
-				if err != nil {
-					a.Logger.Errorf("cant send event to queue %q", err)
-				}
-			}
+		case <-ticker.C:
+			a.queryAndNotify()
 		}
 	}
 }
