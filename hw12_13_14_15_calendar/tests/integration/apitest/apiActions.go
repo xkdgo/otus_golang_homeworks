@@ -131,23 +131,23 @@ func (s *APISuiteActions) CheckMailIsSended() {
 	timeout, err := time.ParseDuration(timeoutEnv)
 	s.Require().NoError(err)
 	s.mx.Lock()
-	s.eventDate = time.Now().Add(60 * time.Second)
+	s.eventDate = time.Now().Add(timeout)
 	s.mx.Unlock()
 	s.CreateEvent()
-	time.Sleep(timeout + 60*time.Second)
 	toPath := os.Getenv("TESTS_MAIL")
-	fd, err := os.Open(toPath)
-	s.Require().NoError(err)
-	scanner := bufio.NewScanner(fd)
-	timer := time.NewTimer(timeout * 3)
+	timer := time.NewTimer(timeout * 2)
 	var sendDetected bool
 	sended := make(chan struct{})
 	go func(ch chan struct{}) {
+		fd, err := os.Open(toPath)
+		s.Require().NoError(err)
+		time.Sleep(timeout)
+		scanner := bufio.NewScanner(fd)
 		for scanner.Scan() {
 			answ := scanner.Text()
 			s.T().Logf("reading mail log: %v", answ)
-			if strings.Contains(answ, "sended") {
-				close(sended)
+			if strings.Contains(answ, "title") {
+				close(ch)
 				return
 			}
 		}
