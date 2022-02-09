@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"time"
 
 	_ "github.com/jackc/pgx/stdlib" //nolint
 	"github.com/pkg/errors"
@@ -42,6 +43,33 @@ func Migrate(cmd *cobra.Command, args []string) error {
 	db, err := goose.OpenDBWithDriver("pgx", conf.Storage.DSN)
 	if err != nil {
 		return errors.Wrapf(err, "goose: failed to open DB: %v", conf.Storage.DSN)
+	}
+
+	err = db.Ping()
+	if err != nil {
+		for i := 0; i < 5; i++ {
+			time.Sleep(1 * time.Second)
+			err = db.Ping()
+			if err == nil {
+				break
+			}
+		}
+		if err != nil {
+			return errors.Wrapf(err, "goose: DB ping failed: %v", conf.Storage.DSN)
+		}
+	}
+	_, err = db.Exec("SELECT 1")
+	if err != nil {
+		for i := 0; i < 5; i++ {
+			time.Sleep(1 * time.Second)
+			_, err = db.Exec("SELECT 1")
+			if err == nil {
+				break
+			}
+		}
+		if err != nil {
+			return errors.Wrapf(err, "goose: DB select test failed: %v", conf.Storage.DSN)
+		}
 	}
 
 	defer func() {
